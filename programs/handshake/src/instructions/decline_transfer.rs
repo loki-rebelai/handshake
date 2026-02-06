@@ -2,24 +2,24 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{transfer_checked, TransferChecked, Mint, TokenAccount, TokenInterface};
 use crate::{state::*, errors::*, constants::*};
 
-/// Reject a transfer as the operator (full refund to sender, no fee)
-pub fn reject_transfer<'a, 'b, 'c, 'info>(
-    ctx: Context<'a, 'b, 'c, 'info, RejectTransfer<'info>>,
+/// Decline a transfer as the recipient (full refund to sender, no fee)
+pub fn decline_transfer<'a, 'b, 'c, 'info>(
+    ctx: Context<'a, 'b, 'c, 'info, DeclineTransfer<'info>>,
     reason: Option<u8>,
 ) -> Result<()> {
     let pool = &mut ctx.accounts.pool;
     let transfer = &mut ctx.accounts.transfer;
 
-    // Validate operator
+    // Validate recipient
     require!(
-        ctx.accounts.operator.key() == pool.operator,
+        ctx.accounts.recipient.key() == transfer.recipient,
         HandshakeError::Unauthorized
     );
 
     // Validate transfer is active
     transfer.validate_active()?;
 
-    // Transfer full amount back to sender (no fee on rejection)
+    // Transfer full amount back to sender (no fee on decline)
     let pool_seeds = &[POOL_SEED, pool.pool_id.as_ref(), &[pool.bump]];
     let pool_signer_seeds = &[&pool_seeds[..]];
 
@@ -40,10 +40,10 @@ pub fn reject_transfer<'a, 'b, 'c, 'info>(
     pool.add_withdrawal(transfer.amount)?;
     pool.increment_transfers_resolved()?;
 
-    // Mark transfer as rejected
-    transfer.mark_as_rejected()?;
+    // Mark transfer as declined
+    transfer.mark_as_declined()?;
 
-    emit!(TransferRejected {
+    emit!(TransferDeclined {
         transfer: transfer.key(),
         pool: pool.key(),
         sender: transfer.sender,
@@ -56,9 +56,9 @@ pub fn reject_transfer<'a, 'b, 'c, 'info>(
 }
 
 #[derive(Accounts)]
-pub struct RejectTransfer<'info> {
+pub struct DeclineTransfer<'info> {
     #[account(mut)]
-    pub operator: Signer<'info>,
+    pub recipient: Signer<'info>,
 
     /// The pool this transfer belongs to
     #[account(
@@ -95,7 +95,7 @@ pub struct RejectTransfer<'info> {
     )]
     pub sender_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// Transfer account to reject (closed to sender)
+    /// Transfer account to decline (closed to sender)
     #[account(
         mut,
         close = sender,
@@ -111,7 +111,7 @@ pub struct RejectTransfer<'info> {
 }
 
 #[event]
-pub struct TransferRejected {
+pub struct TransferDeclined {
     pub transfer: Pubkey,
     pub pool: Pubkey,
     pub sender: Pubkey,

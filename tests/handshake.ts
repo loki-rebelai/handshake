@@ -145,6 +145,26 @@ function rejectTransferAccounts(
   };
 }
 
+/** Build and return the accounts object for declineTransfer */
+function declineTransferAccounts(
+  recipient: PublicKey,
+  sender: PublicKey,
+  poolPda: PublicKey,
+  mint: PublicKey,
+  transferPda: PublicKey
+) {
+  return {
+    recipient,
+    pool: poolPda,
+    mint,
+    poolTokenAccount: getAta(mint, poolPda),
+    senderTokenAccount: getAta(mint, sender),
+    transfer: transferPda,
+    sender,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  };
+}
+
 /** Build and return the accounts object for expireTransfer */
 function expireTransferAccounts(
   caller: PublicKey,
@@ -679,7 +699,7 @@ describe("handshake", () => {
         .rpc();
     });
 
-    it("C4. operator rejects transfer (sender gets 97.5% back, fee kept)", async () => {
+    it("C4. operator rejects transfer (sender gets full refund, no fee)", async () => {
       const nonce = nextNonce();
       const [transferPda] = findTransferPda(programId, sender.publicKey, recipient.publicKey, nonce);
 
@@ -693,9 +713,9 @@ describe("handshake", () => {
         .signers([sender])
         .rpc();
 
-      // Operator rejects
+      // Operator rejects with reason code
       await program.methods
-        .rejectTransfer(1, "Suspicious activity")
+        .rejectTransfer(1)
         .accounts(rejectTransferAccounts(operator, sender.publicKey, feePoolPda, mint, transferPda))
         .rpc();
 
@@ -703,19 +723,20 @@ describe("handshake", () => {
       const closed = await connection.getAccountInfo(transferPda);
       assert.isNull(closed);
 
-      // Sender gets net refund (amount - fee)
+      // Sender gets full refund (no fee deducted)
       const senderBalAfter = await getTokenBalance(connection, getAta(mint, sender.publicKey));
       assert.equal(
-        senderBalBefore.sub(senderBalAfter).toString(),
-        EXPECTED_FEE.toString(),
-        "Sender should only lose the fee amount"
+        senderBalAfter.toString(),
+        senderBalBefore.toString(),
+        "Sender should get full refund"
       );
 
-      // Pool collected fees increased
+      // Pool collected fees should NOT increase
       const pool = await program.account.pool.fetch(feePoolPda);
       assert.equal(
-        pool.collectedFees.sub(poolFeesBefore).toString(),
-        EXPECTED_FEE.toString()
+        pool.collectedFees.toString(),
+        poolFeesBefore.toString(),
+        "No fees collected on rejection"
       );
     });
 
@@ -732,7 +753,7 @@ describe("handshake", () => {
       // Sender tries to reject (only operator can)
       try {
         await program.methods
-          .rejectTransfer(1, "I am not the operator")
+          .rejectTransfer(1)
           .accounts(rejectTransferAccounts(sender.publicKey, sender.publicKey, feePoolPda, mint, transferPda))
           .signers([sender])
           .rpc();
@@ -749,25 +770,110 @@ describe("handshake", () => {
         .rpc();
     });
 
-    it("C6. fails to reject with reason_message > 200 chars", async () => {
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Group C2: Decline Transfer (receiver rejects)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe("C2. Decline Transfer (receiver rejects)", () => {
+    const TRANSFER_AMOUNT = new BN(10_000 * 1_000_000); // 10,000 tokens
+
+    it("C2a. recipient declines transfer (sender gets full refund)", async () => {
       const nonce = nextNonce();
       const [transferPda] = findTransferPda(programId, sender.publicKey, recipient.publicKey, nonce);
 
+      const senderBalBefore = await getTokenBalance(connection, getAta(mint, sender.publicKey));
+      const poolFeesBefore = (await program.account.pool.fetch(feePoolPda)).collectedFees;
+
+      // Create
       await program.methods
-        .createTransfer(recipient.publicKey, nonce, TRANSFER_AMOUNT, "long msg test", new BN(0), new BN(0))
+        .createTransfer(recipient.publicKey, nonce, TRANSFER_AMOUNT, "decline test", new BN(0), new BN(0))
         .accounts(createTransferAccounts(sender.publicKey, feePoolPda, mint, transferPda))
         .signers([sender])
         .rpc();
 
-      const longMessage = "x".repeat(201);
+      // Recipient declines with reason code
+      await program.methods
+        .declineTransfer(1)
+        .accounts(declineTransferAccounts(recipient.publicKey, sender.publicKey, feePoolPda, mint, transferPda))
+        .signers([recipient])
+        .rpc();
+
+      // Transfer account closed
+      const closed = await connection.getAccountInfo(transferPda);
+      assert.isNull(closed);
+
+      // Sender gets full refund
+      const senderBalAfter = await getTokenBalance(connection, getAta(mint, sender.publicKey));
+      assert.equal(
+        senderBalAfter.toString(),
+        senderBalBefore.toString(),
+        "Sender should get full refund on decline"
+      );
+
+      // Pool collected fees should NOT increase
+      const pool = await program.account.pool.fetch(feePoolPda);
+      assert.equal(
+        pool.collectedFees.toString(),
+        poolFeesBefore.toString(),
+        "No fees collected on decline"
+      );
+    });
+
+    it("C2b. recipient declines with no reason (reason = null)", async () => {
+      const nonce = nextNonce();
+      const [transferPda] = findTransferPda(programId, sender.publicKey, recipient.publicKey, nonce);
+
+      const senderBalBefore = await getTokenBalance(connection, getAta(mint, sender.publicKey));
+
+      // Create
+      await program.methods
+        .createTransfer(recipient.publicKey, nonce, TRANSFER_AMOUNT, "no reason", new BN(0), new BN(0))
+        .accounts(createTransferAccounts(sender.publicKey, feePoolPda, mint, transferPda))
+        .signers([sender])
+        .rpc();
+
+      // Recipient declines with no reason
+      await program.methods
+        .declineTransfer(null)
+        .accounts(declineTransferAccounts(recipient.publicKey, sender.publicKey, feePoolPda, mint, transferPda))
+        .signers([recipient])
+        .rpc();
+
+      // Transfer account closed
+      const closed = await connection.getAccountInfo(transferPda);
+      assert.isNull(closed);
+
+      // Sender gets full refund
+      const senderBalAfter = await getTokenBalance(connection, getAta(mint, sender.publicKey));
+      assert.equal(
+        senderBalAfter.toString(),
+        senderBalBefore.toString(),
+        "Sender should get full refund"
+      );
+    });
+
+    it("C2c. fails when non-recipient tries to decline", async () => {
+      const nonce = nextNonce();
+      const [transferPda] = findTransferPda(programId, sender.publicKey, recipient.publicKey, nonce);
+
+      await program.methods
+        .createTransfer(recipient.publicKey, nonce, TRANSFER_AMOUNT, "auth decline", new BN(0), new BN(0))
+        .accounts(createTransferAccounts(sender.publicKey, feePoolPda, mint, transferPda))
+        .signers([sender])
+        .rpc();
+
+      // ThirdParty tries to decline
       try {
         await program.methods
-          .rejectTransfer(1, longMessage)
-          .accounts(rejectTransferAccounts(operator, sender.publicKey, feePoolPda, mint, transferPda))
+          .declineTransfer(null)
+          .accounts(declineTransferAccounts(thirdParty.publicKey, sender.publicKey, feePoolPda, mint, transferPda))
+          .signers([thirdParty])
           .rpc();
-        assert.fail("Should fail with long reason message");
+        assert.fail("Non-recipient should not be able to decline");
       } catch (err: any) {
-        assert.include(err.toString(), "InvalidMemoLength");
+        assert.ok(err);
       }
 
       // Cleanup
@@ -776,6 +882,36 @@ describe("handshake", () => {
         .accounts(cancelTransferAccounts(sender.publicKey, feePoolPda, mint, transferPda))
         .signers([sender])
         .rpc();
+    });
+
+    it("C2d. fails to decline an already cancelled transfer", async () => {
+      const nonce = nextNonce();
+      const [transferPda] = findTransferPda(programId, sender.publicKey, recipient.publicKey, nonce);
+
+      // Create and immediately cancel
+      await program.methods
+        .createTransfer(recipient.publicKey, nonce, TRANSFER_AMOUNT, "cancel first", new BN(0), new BN(0))
+        .accounts(createTransferAccounts(sender.publicKey, feePoolPda, mint, transferPda))
+        .signers([sender])
+        .rpc();
+
+      await program.methods
+        .cancelTransfer()
+        .accounts(cancelTransferAccounts(sender.publicKey, feePoolPda, mint, transferPda))
+        .signers([sender])
+        .rpc();
+
+      // Recipient tries to decline a closed account - should fail
+      try {
+        await program.methods
+          .declineTransfer(null)
+          .accounts(declineTransferAccounts(recipient.publicKey, sender.publicKey, feePoolPda, mint, transferPda))
+          .signers([recipient])
+          .rpc();
+        assert.fail("Should not be able to decline a cancelled transfer");
+      } catch (err: any) {
+        assert.ok(err);
+      }
     });
   });
 

@@ -56,10 +56,16 @@ pub mod handshake {
 
     pub fn reject_transfer<'a, 'b, 'c, 'info>(
         ctx: Context<'a, 'b, 'c, 'info, RejectTransfer<'info>>,
-        reason_code: u8,
-        reason_message: String,
+        reason: Option<u8>,
     ) -> Result<()> {
-        instructions::reject_transfer(ctx, reason_code, reason_message)
+        instructions::reject_transfer(ctx, reason)
+    }
+
+    pub fn decline_transfer<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, DeclineTransfer<'info>>,
+        reason: Option<u8>,
+    ) -> Result<()> {
+        instructions::decline_transfer(ctx, reason)
     }
 
     pub fn expire_transfer<'a, 'b, 'c, 'info>(

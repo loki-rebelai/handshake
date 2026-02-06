@@ -85,4 +85,10 @@ pub enum HandshakeError {
 
     #[msg("Invalid transfer")]
     InvalidTransfer,
+
+    #[msg("Transfer already declined")]
+    TransferAlreadyDeclined,
+
+    #[msg("Only recipient can decline transfer")]
+    OnlyRecipientCanDecline,
 }

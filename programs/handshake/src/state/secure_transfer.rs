@@ -47,6 +47,7 @@ pub enum TransferStatus {
     Cancelled,
     Rejected,
     Expired,
+    Declined,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -224,6 +225,13 @@ impl SecureTransfer {
     pub fn mark_as_expired(&mut self) -> Result<()> {
         self.validate_active()?;
         self.status = TransferStatus::Expired;
+        Ok(())
+    }
+
+    /// Mark as declined
+    pub fn mark_as_declined(&mut self) -> Result<()> {
+        self.validate_active()?;
+        self.status = TransferStatus::Declined;
         Ok(())
     }
 }
