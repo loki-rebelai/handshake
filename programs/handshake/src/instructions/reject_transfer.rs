@@ -117,7 +117,7 @@ pub struct RejectTransfer<'info> {
     )]
     pub transfer: Box<Account<'info, SecureTransfer>>,
 
-    /// Sender (for rent refund on close)
+    /// CHECK: Sender receives rent refund on close. Validated via transfer.sender constraint.
     #[account(mut)]
     pub sender: AccountInfo<'info>,
 

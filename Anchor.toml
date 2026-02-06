@@ -7,7 +7,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-handshake = "HANDSHAKE1111111111111111111111111111111111111"
+handshake = "HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg"
 
 [registry]
 url = "https://api.apr.dev"

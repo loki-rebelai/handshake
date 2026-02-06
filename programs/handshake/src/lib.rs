@@ -8,7 +8,7 @@ mod state;
 use instructions::*;
 use state::*;
 
-declare_id!("HANDSHAKE1111111111111111111111111111111111111");
+declare_id!("HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg");
 
 #[program]
 pub mod handshake {
