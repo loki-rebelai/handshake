@@ -1,5 +1,5 @@
 ---
-name: loki-payments
+name: silkyway-payments
 description: Send, claim, and cancel escrow payments on Solana
 ---
 
@@ -13,7 +13,7 @@ description: Send, claim, and cancel escrow payments on Solana
 ## Send Payment
 
 ```typescript
-const result = await loki.sendPayment({
+const result = await silkyway.sendPayment({
   recipient: '<recipient-pubkey>',
   amount: 10.00,  // USDC
   memo: 'Payment for service',
@@ -25,13 +25,13 @@ const result = await loki.sendPayment({
 ## Claim Payment
 
 ```typescript
-await loki.claimPayment('<transfer-pda>');
+await silkyway.claimPayment('<transfer-pda>');
 ```
 
 ## Cancel Payment
 
 ```typescript
-await loki.cancelPayment('<transfer-pda>');
+await silkyway.cancelPayment('<transfer-pda>');
 ```
 
 ## API Endpoints (Direct)

@@ -1,6 +1,6 @@
 # Changelog
 
-> Version history for the Loki Protocol.
+> Version history for the Silkyway Protocol.
 
 ## 0.1.0 — 2026-02-07
 

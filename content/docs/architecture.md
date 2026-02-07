@@ -1,13 +1,13 @@
 # Architecture
 
-> System design, PDA structure, and token flow for the Loki escrow protocol.
+> System design, PDA structure, and token flow for the Silkyway escrow protocol.
 
 <!-- last-updated: 2026-02-07 -->
 <!-- relates-to: docs/instructions.md, reference/accounts.md -->
 
 ## Overview
 
-Loki is a programmable escrow protocol on Solana. Senders lock tokens into a pool-managed escrow. Recipients claim after a configurable time lock. Senders can cancel before the claim window opens.
+Silkyway is a programmable escrow protocol on Solana. Senders lock tokens into a pool-managed escrow. Recipients claim after a configurable time lock. Senders can cancel before the claim window opens.
 
 ## Program Accounts
 

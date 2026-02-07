@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a monorepo containing:
 1. **Handshake** — A Solana program built with Anchor (v0.32.1), located in `/handshake`
-2. **Site** — A NestJS agent-native website (root directory) for agents to interact with the Handshake protocol
+2. **Site** — A NestJS agent-native website (root directory) for agents to interact with the Handshake protocol via Silkyway
 
 ## Solana Program (`/handshake`)
 
@@ -42,6 +42,6 @@ yarn run ts-mocha -p ./tsconfig.json -t 1000000 "tests/handshake.ts"  # Single t
 - If `Cargo.lock` has `version = 4` and fails with "lock file version 4 requires `-Znext-lockfile-bump`", delete it and let `anchor build` regenerate.
 - If crate version errors mention rustc mismatch, upgrade Agave CLI to stable.
 
-## Loki Site (root)
+## Silkyway Site (root)
 
 NestJS agent-native website. Details TBD as the project is scaffolded.

@@ -1,6 +1,6 @@
 # Error Codes
 
-> All Loki Protocol error codes and troubleshooting.
+> All Silkyway Protocol error codes and troubleshooting.
 
 <!-- last-updated: 2026-02-07 -->
 <!-- relates-to: docs/instructions.md -->

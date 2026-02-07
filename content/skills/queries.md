@@ -1,5 +1,5 @@
 ---
-name: loki-queries
+name: silkyway-queries
 description: Query transfer status and history
 ---
 
@@ -13,14 +13,14 @@ description: Query transfer status and history
 ## Get Transfer by PDA
 
 ```typescript
-const transfer = await loki.getTransfer('<transfer-pda>');
+const transfer = await silkyway.getTransfer('<transfer-pda>');
 // { sender, recipient, amount, status, claimableAfter, ... }
 ```
 
 ## List Transfers by Wallet
 
 ```typescript
-const transfers = await loki.getTransfers('<wallet-pubkey>');
+const transfers = await silkyway.getTransfers('<wallet-pubkey>');
 // [{ transferPda, sender, recipient, amount, status, ... }, ...]
 ```
 

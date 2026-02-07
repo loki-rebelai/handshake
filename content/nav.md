@@ -1,6 +1,6 @@
 # Navigation
 
-> Full site map for the Loki Protocol documentation.
+> Full site map for the Silkyway Protocol documentation.
 
 ## Entry Points
 - [llms.txt](../llms.txt): LLM discovery entry point

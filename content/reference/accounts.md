@@ -1,6 +1,6 @@
 # Account Schemas
 
-> On-chain account data structures for the Loki Protocol.
+> On-chain account data structures for the Silkyway Protocol.
 
 <!-- last-updated: 2026-02-07 -->
 <!-- relates-to: docs/architecture.md -->

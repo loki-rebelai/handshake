@@ -1,6 +1,6 @@
 # Reference
 
-> Technical reference for the Loki Protocol.
+> Technical reference for the Silkyway Protocol.
 
 ## Contents
 

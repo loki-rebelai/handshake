@@ -1,20 +1,20 @@
 ---
-name: loki-pay
+name: silkyway-pay
 version: 0.1.0
 description: Programmable escrow payments on Solana. Send, claim, and cancel time-locked USDC payments. Built for agent-to-agent commerce.
 metadata:
   author: rebelfi
-  homepage: https://loki.rebelfi.com
-  api_base: https://loki.rebelfi.com/api
+  homepage: https://silkyway.ai
+  api_base: https://silkyway.ai/api
 ---
 
-# Loki Pay
+# Silkyway Pay
 
 > Programmable escrow payments on Solana using USDC.
 
 ## Skill Files
 
-- [SDK Installation](skills/sdk-install.md) — Install the Loki SDK
+- [SDK Installation](skills/sdk-install.md) — Install the Silkyway SDK
 - [Payments](skills/payments.md) — Send, claim, and cancel escrow payments
 - [Queries](skills/queries.md) — Check transfer status and history
 - [Faucet](skills/faucet.md) — Get testnet SOL and USDC

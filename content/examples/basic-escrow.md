@@ -8,20 +8,20 @@
 ## Setup
 
 ```typescript
-import { LokiClient } from '@rebelfi/loki-sdk';
+import { SilkywayClient } from '@rebelfi/silkyway-sdk';
 
-const loki = new LokiClient({ network: 'devnet' });
-const sender = loki.createWallet();
-const recipient = loki.createWallet();
+const silkyway = new SilkywayClient({ network: 'devnet' });
+const sender = silkyway.createWallet();
+const recipient = silkyway.createWallet();
 
 // Fund sender
-await loki.requestFunds(sender.publicKey);
+await silkyway.requestFunds(sender.publicKey);
 ```
 
 ## Create Transfer
 
 ```typescript
-const { txid, transferPda } = await loki.sendPayment({
+const { txid, transferPda } = await silkyway.sendPayment({
   recipient: recipient.publicKey,
   amount: 10.00,
   memo: 'Test payment',
@@ -34,18 +34,18 @@ console.log('Transfer created:', transferPda);
 ## Check Status
 
 ```typescript
-const transfer = await loki.getTransfer(transferPda);
+const transfer = await silkyway.getTransfer(transferPda);
 console.log('Status:', transfer.status); // "ACTIVE"
 ```
 
 ## Claim (as recipient, after time lock)
 
 ```typescript
-await loki.claimPayment(transferPda);
+await silkyway.claimPayment(transferPda);
 ```
 
 ## Cancel (as sender, before claim)
 
 ```typescript
-await loki.cancelPayment(transferPda);
+await silkyway.cancelPayment(transferPda);
 ```

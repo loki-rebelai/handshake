@@ -1,6 +1,6 @@
 # Documentation
 
-> Technical documentation for the Loki Protocol.
+> Technical documentation for the Silkyway Protocol.
 
 ## Contents
 

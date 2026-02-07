@@ -1,6 +1,6 @@
 # Examples
 
-> Code examples for common Loki Protocol workflows.
+> Code examples for common Silkyway Protocol workflows.
 
 ## Contents
 

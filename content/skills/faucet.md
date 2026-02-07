@@ -1,5 +1,5 @@
 ---
-name: loki-faucet
+name: silkyway-faucet
 description: Get testnet SOL and USDC for development
 ---
 
@@ -13,7 +13,7 @@ description: Get testnet SOL and USDC for development
 ## Using the SDK
 
 ```typescript
-await loki.requestFunds('<wallet-pubkey>');
+await silkyway.requestFunds('<wallet-pubkey>');
 // Airdrops 1 SOL + 100 USDC to the wallet
 ```
 

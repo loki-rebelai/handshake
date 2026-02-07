@@ -3,18 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LOKI PROTOCOL // HANDSHAKE</title>
+  <title>SILKYWAY // HANDSHAKE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anybody:wght@900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --neon-green: #00ff41;
-      --neon-cyan: #00ffff;
-      --dark-bg: #0a0e0f;
-      --darker-bg: #050708;
-      --grid-color: rgba(0, 255, 65, 0.1);
-      --glow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green), 0 0 30px var(--neon-green);
+      --solar-gold: #fbbf24;
+      --solar-amber: #f59e0b;
+      --solar-orange: #f97316;
+      --solar-white: #fef3c7;
+      --nebula-purple: #a855f7;
+      --nebula-violet: #7c3aed;
+      --nebula-pink: #ec4899;
+      --deep-space: #0c0015;
+      --space-mid: #1a0a2e;
+      --star-white: #faf5ff;
+      --glow-gold: 0 0 20px rgba(251, 191, 36, 0.6), 0 0 60px rgba(251, 191, 36, 0.3), 0 0 100px rgba(251, 191, 36, 0.1);
+      --glow-purple: 0 0 20px rgba(168, 85, 247, 0.4), 0 0 60px rgba(168, 85, 247, 0.2);
     }
 
     * {
@@ -24,86 +30,134 @@
     }
 
     body {
-      background: var(--darker-bg);
-      color: var(--neon-green);
-      font-family: 'JetBrains Mono', monospace;
+      background: var(--deep-space);
+      color: var(--star-white);
+      font-family: 'DM Mono', monospace;
       overflow-x: hidden;
       position: relative;
       min-height: 100vh;
     }
 
-    /* Scanline effect */
-    body::before {
-      content: '';
+    /* Starfield layer */
+    .starfield {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.15),
-        rgba(0, 0, 0, 0.15) 1px,
-        transparent 1px,
-        transparent 2px
-      );
-      pointer-events: none;
-      z-index: 1000;
-      animation: scanline 8s linear infinite;
-    }
-
-    /* Grid background */
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image:
-        linear-gradient(var(--grid-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-      background-size: 50px 50px;
       pointer-events: none;
       z-index: 0;
-      animation: gridMove 20s linear infinite;
     }
 
-    @keyframes scanline {
-      0% { transform: translateY(-100%); }
-      100% { transform: translateY(100%); }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: white;
+      animation: twinkle var(--duration) ease-in-out infinite;
+      animation-delay: var(--delay);
     }
 
-    @keyframes gridMove {
-      0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
-      100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+    @keyframes twinkle {
+      0%, 100% { opacity: var(--min-opacity); transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
     }
 
-    @keyframes glitch {
-      0%, 100% { transform: translate(0); }
-      25% { transform: translate(-2px, 2px); }
-      50% { transform: translate(2px, -2px); }
-      75% { transform: translate(-2px, -2px); }
+    /* Nebula glow — radial gradients */
+    .nebula {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 800px 600px at 20% 20%, rgba(168, 85, 247, 0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 600px 800px at 80% 60%, rgba(236, 72, 153, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 900px 400px at 50% 90%, rgba(124, 58, 237, 0.1) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 400px at 70% 10%, rgba(251, 191, 36, 0.06) 0%, transparent 70%);
+      animation: nebulaShift 30s ease-in-out infinite alternate;
     }
 
-    @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
+    @keyframes nebulaShift {
+      0% { opacity: 0.8; filter: hue-rotate(0deg); }
+      50% { opacity: 1; filter: hue-rotate(10deg); }
+      100% { opacity: 0.8; filter: hue-rotate(-5deg); }
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
+    /* Solar corona overlay — the "sun" glow from behind the title */
+    .corona {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(251, 191, 36, 0.15) 0%,
+        rgba(249, 115, 22, 0.08) 30%,
+        rgba(168, 85, 247, 0.04) 60%,
+        transparent 70%
+      );
+      pointer-events: none;
+      z-index: 0;
+      animation: coronaPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes coronaPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+      50% { transform: translateX(-50%) scale(1.08); opacity: 1; }
+    }
+
+    /* Dust particles */
+    .dust {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .dust-particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(251, 191, 36, 0.4);
+      border-radius: 50%;
+      animation: drift var(--drift-duration) linear infinite;
+      animation-delay: var(--drift-delay);
+    }
+
+    @keyframes drift {
+      0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translate(var(--drift-x), var(--drift-y)) rotate(360deg); opacity: 0; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes pulse {
-      0%, 100% { text-shadow: var(--glow); }
-      50% { text-shadow: 0 0 5px var(--neon-green); }
+    @keyframes solarFlare {
+      0%, 100% { text-shadow: var(--glow-gold); }
+      50% { text-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 80px rgba(251, 191, 36, 0.4), 0 0 120px rgba(249, 115, 22, 0.2); }
+    }
+
+    @keyframes orbitLine {
+      0% { stroke-dashoffset: 1000; }
+      100% { stroke-dashoffset: 0; }
     }
 
     .container {
       position: relative;
-      z-index: 1;
+      z-index: 2;
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem;
@@ -112,126 +166,242 @@
       flex-direction: column;
     }
 
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(168, 85, 247, 0.6);
+      margin-bottom: 1rem;
+      animation: fadeUp 0.6s ease-out;
+    }
+
+    .status-bar span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--solar-gold);
+      box-shadow: 0 0 6px var(--solar-gold);
+      animation: statusPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Header */
     .header {
-      border: 2px solid var(--neon-green);
-      padding: 2rem;
+      padding: 3rem 2.5rem;
       margin-bottom: 3rem;
-      background: rgba(0, 255, 65, 0.03);
-      box-shadow: inset 0 0 30px rgba(0, 255, 65, 0.1);
-      animation: fadeIn 0.8s ease-out;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.06) 0%, rgba(251, 191, 36, 0.04) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 2px;
       position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.8s ease-out;
     }
 
     .header::before {
-      content: '╔════════════════════════════════════════════════════════════╗';
+      content: '';
       position: absolute;
-      top: -12px;
-      left: 10px;
-      font-size: 10px;
-      background: var(--darker-bg);
-      padding: 0 10px;
-      color: var(--neon-green);
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--solar-gold), var(--nebula-purple), transparent);
+      opacity: 0.6;
     }
 
     .header::after {
-      content: '╚════════════════════════════════════════════════════════════╝';
+      content: '';
       position: absolute;
-      bottom: -12px;
-      right: 10px;
-      font-size: 10px;
-      background: var(--darker-bg);
-      padding: 0 10px;
-      color: var(--neon-green);
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--nebula-purple), var(--solar-gold), transparent);
+      opacity: 0.3;
+    }
+
+    /* Orbit ring decoration */
+    .orbit-ring {
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 200px;
+      height: 200px;
+      border: 1px solid rgba(251, 191, 36, 0.1);
+      border-radius: 50%;
+      animation: orbitSpin 20s linear infinite;
+    }
+
+    .orbit-ring::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--solar-gold);
+      box-shadow: 0 0 10px var(--solar-gold);
+    }
+
+    @keyframes orbitSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(2rem, 8vw, 4.5rem);
+      font-family: 'Anybody', sans-serif;
+      font-size: clamp(2.5rem, 9vw, 5.5rem);
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      text-shadow: var(--glow);
-      margin-bottom: 0.5rem;
-      animation: pulse 3s infinite, glitch 5s infinite;
+      letter-spacing: 0.05em;
+      line-height: 0.95;
+      background: linear-gradient(135deg, var(--solar-white) 0%, var(--solar-gold) 40%, var(--solar-orange) 70%, var(--nebula-pink) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 0 40px rgba(251, 191, 36, 0.3));
+      animation: fadeUp 0.8s ease-out;
     }
 
     .subtitle {
-      font-size: clamp(0.9rem, 2vw, 1.2rem);
-      color: var(--neon-cyan);
-      text-shadow: 0 0 10px var(--neon-cyan);
-      letter-spacing: 0.15em;
-      animation: fadeIn 1s ease-out 0.3s both;
+      font-size: clamp(0.85rem, 2vw, 1.1rem);
+      color: var(--nebula-purple);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-top: 0.75rem;
+      animation: fadeUp 1s ease-out 0.2s both;
     }
 
     .tagline {
-      margin-top: 1rem;
-      font-size: 0.95rem;
-      color: rgba(0, 255, 65, 0.7);
-      animation: fadeIn 1.2s ease-out 0.5s both;
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+      font-style: italic;
+      color: rgba(250, 245, 255, 0.6);
+      line-height: 1.6;
+      max-width: 600px;
+      animation: fadeUp 1.2s ease-out 0.4s both;
     }
 
     .agent-notice {
-      margin-top: 1rem;
-      padding: 1rem;
-      border: 1px solid var(--neon-cyan);
-      background: rgba(0, 255, 255, 0.05);
-      font-size: 0.85rem;
-      color: var(--neon-cyan);
-      animation: fadeIn 1.4s ease-out 0.7s both;
+      margin-top: 1.5rem;
+      padding: 1rem 1.25rem;
+      border-left: 2px solid var(--solar-gold);
+      background: rgba(251, 191, 36, 0.04);
+      font-size: 0.8rem;
+      color: rgba(250, 245, 255, 0.7);
+      animation: fadeUp 1.4s ease-out 0.6s both;
+    }
+
+    .agent-notice strong {
+      color: var(--solar-gold);
     }
 
     .agent-notice a {
-      color: var(--neon-green);
+      color: var(--nebula-purple);
       text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.2s;
     }
 
+    .agent-notice a:hover {
+      color: var(--solar-gold);
+    }
+
+    /* Content grid */
     .content {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      animation: fadeIn 1s ease-out 0.6s both;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      animation: fadeUp 1s ease-out 0.6s both;
     }
 
     .panel {
-      border: 1px solid var(--neon-green);
-      padding: 1.5rem;
-      background: rgba(0, 255, 65, 0.02);
-      transition: all 0.3s ease;
+      border: 1px solid rgba(168, 85, 247, 0.15);
+      padding: 1.75rem;
+      background: linear-gradient(180deg, rgba(168, 85, 247, 0.04) 0%, rgba(12, 0, 21, 0.8) 100%);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
+      border-radius: 2px;
+      overflow: hidden;
     }
 
     .panel::before {
-      content: '▓';
+      content: '';
       position: absolute;
-      top: 5px;
-      left: 5px;
-      color: var(--neon-green);
-      font-size: 8px;
-      opacity: 0.5;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--nebula-purple), transparent);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .panel::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at 50% 0%, rgba(251, 191, 36, 0.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
     }
 
     .panel:hover {
-      background: rgba(0, 255, 65, 0.05);
-      border-color: var(--neon-cyan);
-      box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.1);
-      transform: translateY(-2px);
+      border-color: rgba(251, 191, 36, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(168, 85, 247, 0.08);
+    }
+
+    .panel:hover::before {
+      opacity: 0.8;
+      background: linear-gradient(90deg, transparent, var(--solar-gold), transparent);
+    }
+
+    .panel:hover::after {
+      opacity: 1;
+    }
+
+    .panel-icon {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      display: block;
+      filter: grayscale(0.3);
     }
 
     .panel h2 {
-      font-size: 1.3rem;
-      margin-bottom: 1rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--neon-cyan);
-      text-shadow: 0 0 10px var(--neon-cyan);
+      letter-spacing: 0.2em;
+      color: var(--solar-gold);
     }
 
     .panel p {
-      line-height: 1.6;
+      line-height: 1.7;
       margin-bottom: 1rem;
-      font-size: 0.9rem;
-      color: rgba(0, 255, 65, 0.8);
+      font-size: 0.85rem;
+      color: rgba(250, 245, 255, 0.5);
     }
 
     .link-list {
@@ -240,101 +410,149 @@
     }
 
     .link-list li {
-      margin: 0.5rem 0;
+      margin: 0.6rem 0;
     }
 
     .link-list a {
-      color: var(--neon-green);
+      color: rgba(250, 245, 255, 0.75);
       text-decoration: none;
-      transition: all 0.2s;
-      display: inline-block;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
       position: relative;
-      padding-left: 20px;
     }
 
     .link-list a::before {
-      content: '>';
-      position: absolute;
-      left: 0;
-      transition: left 0.2s;
+      content: '›';
+      color: var(--nebula-purple);
+      font-size: 1.1em;
+      transition: all 0.3s;
+      display: inline-block;
+      width: 12px;
     }
 
     .link-list a:hover {
-      color: var(--neon-cyan);
-      text-shadow: 0 0 10px var(--neon-cyan);
-      transform: translateX(5px);
+      color: var(--solar-gold);
     }
 
     .link-list a:hover::before {
-      left: -5px;
+      color: var(--solar-gold);
+      transform: translateX(3px);
     }
 
+    /* Footer */
     .footer {
-      margin-top: 3rem;
+      margin-top: 4rem;
       text-align: center;
-      padding: 2rem;
-      border-top: 1px solid var(--neon-green);
-      font-size: 0.85rem;
-      color: rgba(0, 255, 65, 0.5);
-      animation: fadeIn 1.5s ease-out 0.8s both;
+      padding: 2.5rem 2rem;
+      border-top: 1px solid rgba(168, 85, 247, 0.12);
+      animation: fadeUp 1.5s ease-out 0.8s both;
+    }
+
+    .footer-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(168, 85, 247, 0.5);
+      margin-bottom: 0.75rem;
     }
 
     .program-id {
-      font-family: 'JetBrains Mono', monospace;
-      background: rgba(0, 255, 65, 0.1);
-      padding: 0.5rem 1rem;
-      border: 1px solid var(--neon-green);
-      display: inline-block;
-      margin-top: 1rem;
+      font-family: 'DM Mono', monospace;
       font-size: 0.75rem;
       letter-spacing: 0.05em;
-      animation: flicker 4s infinite;
+      color: var(--solar-gold);
+      background: rgba(251, 191, 36, 0.06);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+      padding: 0.6rem 1.25rem;
+      display: inline-block;
+      border-radius: 2px;
+      position: relative;
+      animation: solarFlare 6s ease-in-out infinite;
     }
 
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      color: rgba(0, 255, 65, 0.6);
-      margin-bottom: 1rem;
+    .footer-note {
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: rgba(250, 245, 255, 0.2);
+      letter-spacing: 0.1em;
     }
 
-    .status-bar span {
-      animation: flicker 3s infinite;
+    /* Shooting star */
+    .shooting-star {
+      position: fixed;
+      width: 100px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(251, 191, 36, 0.8), transparent);
+      opacity: 0;
+      z-index: 1;
+      pointer-events: none;
+      animation: shoot var(--shoot-duration) ease-in var(--shoot-delay) infinite;
+      transform: rotate(var(--shoot-angle));
+    }
+
+    @keyframes shoot {
+      0% { opacity: 0; transform: rotate(var(--shoot-angle)) translateX(0); }
+      5% { opacity: 1; }
+      15% { opacity: 0; transform: rotate(var(--shoot-angle)) translateX(400px); }
+      100% { opacity: 0; }
     }
 
     @media (max-width: 768px) {
       .content {
         grid-template-columns: 1fr;
       }
-
       h1 {
-        font-size: 2rem;
+        font-size: 2.5rem;
+      }
+      .header {
+        padding: 2rem 1.5rem;
+      }
+      .status-bar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .orbit-ring {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
+  <div class="starfield" id="starfield"></div>
+  <div class="nebula"></div>
+  <div class="corona"></div>
+  <div class="dust" id="dust"></div>
+
+  <!-- Shooting stars -->
+  <div class="shooting-star" style="top: 15%; left: 10%; --shoot-duration: 12s; --shoot-delay: 2s; --shoot-angle: -15deg;"></div>
+  <div class="shooting-star" style="top: 35%; left: 60%; --shoot-duration: 18s; --shoot-delay: 7s; --shoot-angle: -25deg;"></div>
+  <div class="shooting-star" style="top: 55%; left: 30%; --shoot-duration: 15s; --shoot-delay: 12s; --shoot-angle: -10deg;"></div>
+
   <div class="container">
     <div class="status-bar">
-      <span>[SYSTEM ONLINE]</span>
-      <span>[SOLANA MAINNET]</span>
-      <span>[ANCHOR v0.32.1]</span>
+      <span><span class="status-dot"></span> System Online</span>
+      <span>Solana Mainnet</span>
+      <span>Anchor v0.32.1</span>
     </div>
 
     <header class="header">
-      <h1>LOKI PROTOCOL</h1>
-      <div class="subtitle">// HANDSHAKE</div>
+      <div class="orbit-ring"></div>
+      <h1>Silkyway</h1>
+      <div class="subtitle">// Handshake Protocol</div>
       <p class="tagline">Programmable escrow on Solana. Time-locked, fee-configurable, multi-party resolution.</p>
       <div class="agent-notice">
-        <strong>⚡ Agent Interface:</strong> Looking for the markdown documentation? Visit the <a href="/">root endpoint</a> for agent-optimized content.
+        <strong>Agent Interface</strong> — Looking for markdown documentation? Visit the <a href="/">root endpoint</a> for agent-optimized content.
       </div>
     </header>
 
     <main class="content">
       <section class="panel">
+        <span class="panel-icon">&#9788;</span>
         <h2>Documentation</h2>
-        <p>Deep dive into the protocol architecture, PDA structures, and token flow mechanisms.</p>
+        <p>Protocol architecture, PDA structures, and token flow mechanics.</p>
         <ul class="link-list">
           <li><a href="/docs/architecture.md">System Architecture</a></li>
           <li><a href="/docs/instructions.md">Instruction Reference</a></li>
@@ -343,25 +561,28 @@
       </section>
 
       <section class="panel">
+        <span class="panel-icon">&#10022;</span>
         <h2>Examples</h2>
-        <p>Production-ready patterns for creating, claiming, and canceling escrow transactions.</p>
+        <p>Production patterns for creating, claiming, and canceling escrow transactions.</p>
         <ul class="link-list">
           <li><a href="/examples/basic-escrow.md">Basic Escrow Flow</a></li>
         </ul>
       </section>
 
       <section class="panel">
+        <span class="panel-icon">&#9883;</span>
         <h2>Agent Integration</h2>
-        <p>Install and configure Loki for autonomous agent payment processing.</p>
+        <p>Install and configure Silkyway for autonomous agent payment processing.</p>
         <ul class="link-list">
-          <li><a href="/skill.md">Loki Pay Skill</a></li>
+          <li><a href="/skill.md">Silkyway Pay Skill</a></li>
           <li><a href="/llms.txt">LLM Metadata</a></li>
         </ul>
       </section>
 
       <section class="panel">
+        <span class="panel-icon">&#9679;</span>
         <h2>Resources</h2>
-        <p>Additional documentation and navigation resources.</p>
+        <p>Additional documentation and navigation.</p>
         <ul class="link-list">
           <li><a href="/CHANGELOG.md">Version History</a></li>
           <li><a href="/nav.md">Full Site Map</a></li>
@@ -370,12 +591,61 @@
     </main>
 
     <footer class="footer">
-      <div>PROGRAM ID</div>
+      <div class="footer-label">Program ID</div>
       <div class="program-id">HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg</div>
-      <div style="margin-top: 2rem; opacity: 0.5;">
-        Built with Anchor Framework on Solana
-      </div>
+      <div class="footer-note">Built with Anchor Framework on Solana</div>
     </footer>
   </div>
+
+  <script>
+    // Generate starfield
+    (function() {
+      const field = document.getElementById('starfield');
+      const count = 160;
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        const size = Math.random() * 2 + 0.5;
+        star.style.cssText = `
+          width: ${size}px;
+          height: ${size}px;
+          top: ${Math.random() * 100}%;
+          left: ${Math.random() * 100}%;
+          --duration: ${Math.random() * 4 + 2}s;
+          --delay: ${Math.random() * 4}s;
+          --min-opacity: ${Math.random() * 0.3 + 0.1};
+        `;
+        field.appendChild(star);
+      }
+    })();
+
+    // Generate floating dust
+    (function() {
+      const dust = document.getElementById('dust');
+      const count = 30;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'dust-particle';
+        const colors = [
+          'rgba(251, 191, 36, 0.3)',
+          'rgba(168, 85, 247, 0.3)',
+          'rgba(236, 72, 153, 0.2)',
+          'rgba(250, 245, 255, 0.2)'
+        ];
+        p.style.cssText = `
+          top: ${Math.random() * 100}%;
+          left: ${Math.random() * 100}%;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          width: ${Math.random() * 2 + 1}px;
+          height: ${Math.random() * 2 + 1}px;
+          --drift-duration: ${Math.random() * 20 + 15}s;
+          --drift-delay: ${Math.random() * 10}s;
+          --drift-x: ${(Math.random() - 0.5) * 200}px;
+          --drift-y: ${(Math.random() - 0.5) * 200}px;
+        `;
+        dust.appendChild(p);
+      }
+    })();
+  </script>
 </body>
 </html>

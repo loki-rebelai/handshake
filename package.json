@@ -1,7 +1,7 @@
 {
-  "name": "loki-site",
+  "name": "silkyway",
   "version": "0.0.1",
-  "description": "Agent-native website for the Loki Protocol",
+  "description": "Agent-native website for the Silkyway Protocol",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

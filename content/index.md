@@ -1,4 +1,4 @@
-# Loki Protocol
+# Silkyway Protocol
 
 > Programmable escrow on Solana. Time-locked, fee-configurable,
 > multi-party resolution. Built with Anchor.
@@ -14,7 +14,7 @@
 - [Basic Escrow Flow](examples/basic-escrow.md): Create, claim, cancel patterns
 
 ## Skill
-- [Loki Pay Skill](skill.md): Install and use Loki for agent payments
+- [Silkyway Pay Skill](skill.md): Install and use Silkyway for agent payments
 
 ## Optional
 - [Changelog](CHANGELOG.md): Version history

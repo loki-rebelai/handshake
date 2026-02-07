@@ -1,4 +1,4 @@
-# Loki Agent-Native Site — Implementation Design
+# Silkyway Agent-Native Site — Implementation Design
 
 > NestJS backend serving an agent-native website for the Handshake escrow protocol.
 > Agents discover capabilities via `llms.txt` and `skill.md`, query live data via REST API,
@@ -353,7 +353,7 @@ NODE_ENV=development
 # Database
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
-DATABASE_NAME=loki
+DATABASE_NAME=silkyway
 DATABASE_USER=postgres
 DATABASE_PASSWORD=postgres
 
@@ -394,13 +394,13 @@ USDC_MINT=<devnet USDC mint>
 ### Future: MCP, API keys, SDK package
 - `McpModule` reusing existing services
 - API key authentication middleware
-- Publish `@rebelfi/loki-sdk` npm package
+- Publish `@rebelfi/silkyway-sdk` npm package
 
 ---
 
 ## Key Differences from Hermes
 
-| Aspect | Hermes | Loki Site |
+| Aspect | Hermes | Silkyway Site |
 |--------|--------|-----------|
 | Yield | Yes (Drift integration) | No |
 | Tx tracking | PendingTx + TxSync + cron job | Synchronous submit + index |

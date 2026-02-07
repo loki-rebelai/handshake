@@ -1,6 +1,6 @@
 # Instructions
 
-> All Loki program instructions with parameters.
+> All Silkyway program instructions with parameters.
 
 <!-- last-updated: 2026-02-07 -->
 <!-- relates-to: docs/architecture.md, docs/api-reference.md -->
