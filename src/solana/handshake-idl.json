@@ -1,0 +1,155 @@
+{
+  "address": "HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg",
+  "metadata": {
+    "name": "handshake",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Programmable escrow on Solana"
+  },
+  "instructions": [
+    {
+      "name": "create_transfer",
+      "discriminator": [],
+      "accounts": [
+        { "name": "sender", "writable": true, "signer": true },
+        { "name": "pool", "writable": true },
+        { "name": "mint" },
+        { "name": "pool_token_account", "writable": true },
+        { "name": "sender_token_account", "writable": true },
+        { "name": "transfer", "writable": true },
+        { "name": "token_program" },
+        { "name": "system_program" },
+        { "name": "associated_token_program" }
+      ],
+      "args": [
+        { "name": "recipient", "type": "pubkey" },
+        { "name": "nonce", "type": "u64" },
+        { "name": "amount", "type": "u64" },
+        { "name": "memo", "type": "string" },
+        { "name": "claimable_after", "type": "i64" },
+        { "name": "claimable_until", "type": "i64" }
+      ]
+    },
+    {
+      "name": "claim_transfer",
+      "discriminator": [],
+      "accounts": [
+        { "name": "recipient", "writable": true, "signer": true },
+        { "name": "pool", "writable": true },
+        { "name": "mint" },
+        { "name": "pool_token_account", "writable": true },
+        { "name": "recipient_token_account", "writable": true },
+        { "name": "transfer", "writable": true },
+        { "name": "sender", "writable": true },
+        { "name": "token_program" }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel_transfer",
+      "discriminator": [],
+      "accounts": [
+        { "name": "sender", "writable": true, "signer": true },
+        { "name": "pool", "writable": true },
+        { "name": "mint" },
+        { "name": "pool_token_account", "writable": true },
+        { "name": "sender_token_account", "writable": true },
+        { "name": "transfer", "writable": true },
+        { "name": "token_program" }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Pool",
+      "discriminator": []
+    },
+    {
+      "name": "SecureTransfer",
+      "discriminator": []
+    }
+  ],
+  "types": [
+    {
+      "name": "Pool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "version", "type": "u8" },
+          { "name": "bump", "type": "u8" },
+          { "name": "pool_id", "type": "pubkey" },
+          { "name": "operator", "type": "pubkey" },
+          { "name": "mint", "type": "pubkey" },
+          { "name": "transfer_fee_bps", "type": "u16" },
+          { "name": "total_deposits", "type": "u64" },
+          { "name": "total_withdrawals", "type": "u64" },
+          { "name": "total_escrowed", "type": "u64" },
+          { "name": "total_transfers_created", "type": "u64" },
+          { "name": "total_transfers_resolved", "type": "u64" },
+          { "name": "collected_fees", "type": "u64" },
+          { "name": "is_paused", "type": "bool" }
+        ]
+      }
+    },
+    {
+      "name": "SecureTransfer",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "version", "type": "u8" },
+          { "name": "bump", "type": "u8" },
+          { "name": "nonce", "type": "u64" },
+          { "name": "sender", "type": "pubkey" },
+          { "name": "recipient", "type": "pubkey" },
+          { "name": "pool", "type": "pubkey" },
+          { "name": "amount", "type": "u64" },
+          { "name": "created_at", "type": "i64" },
+          { "name": "claimable_after", "type": "i64" },
+          { "name": "claimable_until", "type": "i64" },
+          { "name": "status", "type": { "defined": { "name": "TransferStatus" } } },
+          { "name": "release_conditions", "type": { "option": { "defined": { "name": "ReleaseConditions" } } } },
+          { "name": "memo", "type": { "array": ["u8", 64] } },
+          { "name": "compliance_hash", "type": { "option": { "array": ["u8", 32] } } }
+        ]
+      }
+    },
+    {
+      "name": "TransferStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Active" },
+          { "name": "Claimed" },
+          { "name": "Cancelled" },
+          { "name": "Rejected" },
+          { "name": "Expired" },
+          { "name": "Declined" }
+        ]
+      }
+    },
+    {
+      "name": "ReleaseConditions",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "condition_type", "type": { "defined": { "name": "ConditionType" } } },
+          { "name": "params", "type": { "array": ["u8", 64] } }
+        ]
+      }
+    },
+    {
+      "name": "ConditionType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "TimeDelay" },
+          { "name": "MultiSig" },
+          { "name": "Oracle" },
+          { "name": "Milestone" }
+        ]
+      }
+    }
+  ],
+  "errors": []
+}
