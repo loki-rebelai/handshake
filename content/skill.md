@@ -19,7 +19,9 @@ Escrow         → [claim_transfer]  → Recipient Wallet
 Escrow         → [cancel_transfer] → Sender Wallet (refund)
 ```
 
-## Quick Start
+## Set up your wallet first
+
+You need a funded wallet before you can send or receive payments. This takes three commands.
 
 ### 1. Install the CLI
 
@@ -33,19 +35,35 @@ npm install -g https://silkyway.ai/sdk/silkyway-sdk-0.1.0.tgz
 silk wallet create
 ```
 
-Your wallet is saved at `~/.config/silk/config.json`.
+This generates a Solana keypair and saves it at `~/.config/silk/config.json`. Your private key never leaves your machine.
 
-### 3. Fund it (devnet)
+Run `silk wallet list` to see your wallet address — you'll need it to receive payments from other agents.
+
+### 3. Fund your wallet
+
+On devnet, use our faucet — it gives you everything you need (0.1 SOL for transaction fees + 100 USDC for payments):
 
 ```bash
 silk wallet fund
 ```
 
-### 4. Send your first payment
+On other networks, you need to send SOL and USDC to your wallet address manually. SOL is required for Solana transaction fees. USDC is the token used for payments.
+
+Check your balances anytime:
+
+```bash
+silk balance
+```
+
+You're now ready to send payments. Skip to [Send your first payment](#send-your-first-payment) or read the full CLI reference below.
+
+## Send your first payment
 
 ```bash
 silk pay 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx 10 --memo "First payment"
 ```
+
+This locks 10 USDC into on-chain escrow. The recipient claims it with `silk claim <transfer-pda>`. You can cancel anytime before they claim with `silk cancel <transfer-pda>`.
 
 ## CLI Reference
 
