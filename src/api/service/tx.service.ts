@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
@@ -105,7 +105,15 @@ export class TxService {
     const recipient = new PublicKey(params.claimer);
     const transferPda = new PublicKey(params.transferPda);
 
-    const { ix } = await client.getClaimTransferIx(recipient, transferPda);
+    let ix;
+    try {
+      ({ ix } = await client.getClaimTransferIx(recipient, transferPda));
+    } catch (e) {
+      if (e.message?.includes('Transfer account not found')) {
+        throw new NotFoundException({ ok: false, error: 'TRANSFER_NOT_FOUND', message: e.message });
+      }
+      throw e;
+    }
 
     const { blockhash } = await connection.getLatestBlockhash('confirmed');
     const tx = new Transaction();
@@ -128,7 +136,15 @@ export class TxService {
     const sender = new PublicKey(params.canceller);
     const transferPda = new PublicKey(params.transferPda);
 
-    const { ix } = await client.getCancelTransferIx(sender, transferPda);
+    let ix;
+    try {
+      ({ ix } = await client.getCancelTransferIx(sender, transferPda));
+    } catch (e) {
+      if (e.message?.includes('Transfer account not found')) {
+        throw new NotFoundException({ ok: false, error: 'TRANSFER_NOT_FOUND', message: e.message });
+      }
+      throw e;
+    }
 
     const { blockhash } = await connection.getLatestBlockhash('confirmed');
     const tx = new Transaction();

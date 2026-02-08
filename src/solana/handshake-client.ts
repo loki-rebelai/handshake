@@ -176,7 +176,10 @@ export class HandshakeClient {
     transferPda: PublicKey,
     isToken2022: boolean = false,
   ) {
-    const transferAccount = (await (this.program.account as any).secureTransfer.fetch(transferPda)) as TransferAccount;
+    const transferAccount = (await (this.program.account as any).secureTransfer.fetchNullable(transferPda)) as TransferAccount | null;
+    if (!transferAccount) {
+      throw new Error(`Transfer account not found: ${transferPda.toBase58()}. It may have already been claimed or cancelled.`);
+    }
     const poolPda = transferAccount.pool;
     const poolAccount = (await (this.program.account as any).pool.fetch(poolPda)) as PoolAccount;
     const mint = poolAccount.mint;
@@ -210,7 +213,10 @@ export class HandshakeClient {
     transferPda: PublicKey,
     isToken2022: boolean = false,
   ) {
-    const transferAccount = (await (this.program.account as any).secureTransfer.fetch(transferPda)) as TransferAccount;
+    const transferAccount = (await (this.program.account as any).secureTransfer.fetchNullable(transferPda)) as TransferAccount | null;
+    if (!transferAccount) {
+      throw new Error(`Transfer account not found: ${transferPda.toBase58()}. It may have already been claimed or cancelled.`);
+    }
     const poolPda = transferAccount.pool;
     const poolAccount = (await (this.program.account as any).pool.fetch(poolPda)) as PoolAccount;
     const mint = poolAccount.mint;
