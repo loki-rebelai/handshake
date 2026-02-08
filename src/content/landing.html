@@ -534,65 +534,60 @@
   <div class="container">
     <div class="status-bar">
       <span><span class="status-dot"></span> System Online</span>
-      <span>Solana Mainnet</span>
+      <span>Solana Devnet</span>
       <span>Anchor v0.32.1</span>
     </div>
 
     <header class="header">
       <div class="orbit-ring"></div>
       <h1>Silkyway</h1>
-      <div class="subtitle">// Handshake Protocol</div>
-      <p class="tagline">Programmable escrow on Solana. Time-locked, fee-configurable, multi-party resolution.</p>
+      <div class="subtitle">// Secure Agent Payments on Solana</div>
+      <p class="tagline">Secure USDC transfers between agents. Cancellable. Time-locked. On-chain.</p>
       <div class="agent-notice">
-        <strong>Agent Interface</strong> — Looking for markdown documentation? Visit the <a href="/">root endpoint</a> for agent-optimized content.
+        <strong>Agent Interface</strong> — Looking for markdown documentation? Visit the <a href="/agent">agent endpoint</a> for machine-readable content, or <a href="/skill.md">skill.md</a> for the full API reference.
       </div>
     </header>
 
     <main class="content">
       <section class="panel">
-        <span class="panel-icon">&#9788;</span>
-        <h2>Documentation</h2>
-        <p>Protocol architecture, PDA structures, and token flow mechanics.</p>
+        <span class="panel-icon">&#9888;</span>
+        <h2>The Problem</h2>
+        <p>Agents sending USDC today have no safety net. Send to the wrong address? Gone. Recipient loses wallet access? Gone. Pay before delivery? Hope they deliver.</p>
+        <p>One-way transfers are a liability for autonomous agents.</p>
+      </section>
+
+      <section class="panel">
+        <span class="panel-icon">&#9889;</span>
+        <h2>The Solution</h2>
+        <p>Silkyway holds USDC in on-chain escrow until both sides are satisfied. Senders can cancel anytime before claim. Recipients can decline unwanted transfers. Time-locks create approval windows.</p>
+        <p>Every transfer is reversible until it's not.</p>
         <ul class="link-list">
           <li><a href="/skill.md">Full API Reference &amp; CLI Guide</a></li>
-          <li><a href="/nav.md">Site Map &amp; Navigation</a></li>
+          <li><a href="/examples/basic-escrow.md">Examples</a></li>
         </ul>
       </section>
 
       <section class="panel">
-        <span class="panel-icon">&#10022;</span>
-        <h2>Examples</h2>
-        <p>Production patterns for creating, claiming, and canceling escrow transactions.</p>
+        <span class="panel-icon">&#10095;</span>
+        <h2>How It Works</h2>
+        <p>Three steps: send, hold, claim or cancel. The on-chain program is the neutral custodian — neither party can rug the other.</p>
+        <p style="font-size: 0.8rem; color: rgba(250, 245, 255, 0.4); margin-top: 0.5rem; font-family: 'DM Mono', monospace;">$ silk pay &lt;address&gt; 25 --memo "for services"</p>
         <ul class="link-list">
-          <li><a href="/examples/basic-escrow.md">Basic Escrow Flow</a></li>
-        </ul>
-      </section>
-
-      <section class="panel">
-        <span class="panel-icon">&#9883;</span>
-        <h2>Agent Integration</h2>
-        <p>Install and configure Silkyway for autonomous agent payment processing.</p>
-        <ul class="link-list">
-          <li><a href="/skill.md">Silkyway Pay Skill</a></li>
+          <li><a href="/agent">Agent Docs (Markdown)</a></li>
           <li><a href="/llms.txt">LLM Metadata</a></li>
-        </ul>
-      </section>
-
-      <section class="panel">
-        <span class="panel-icon">&#9679;</span>
-        <h2>Resources</h2>
-        <p>Additional documentation and navigation.</p>
-        <ul class="link-list">
-          <li><a href="/CHANGELOG.md">Version History</a></li>
-          <li><a href="/nav.md">Full Site Map</a></li>
         </ul>
       </section>
     </main>
 
+    <div class="activity-cta" style="margin-top: 2rem; padding: 1.5rem 2rem; text-align: center; border: 1px solid rgba(251, 191, 36, 0.2); background: linear-gradient(135deg, rgba(251, 191, 36, 0.06) 0%, rgba(168, 85, 247, 0.04) 100%); border-radius: 2px; animation: fadeUp 1.2s ease-out 0.8s both;">
+      <div style="font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--solar-gold); margin-bottom: 0.5rem;">Live on Solana Devnet</div>
+      <a href="/activity" style="color: var(--star-white); text-decoration: none; font-size: 1rem; font-weight: 500; border-bottom: 1px dashed var(--solar-gold);">View Live Transfer Activity &rarr;</a>
+    </div>
+
     <footer class="footer">
       <div class="footer-label">Program ID</div>
-      <div class="program-id">HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg</div>
-      <div class="footer-note">Built with Anchor Framework on Solana</div>
+      <div class="program-id"><a href="https://solscan.io/account/HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg?cluster=devnet" target="_blank" rel="noopener" style="color: inherit; text-decoration: none; border-bottom: 1px dashed var(--solar-gold);">HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg</a></div>
+      <div class="footer-note">Deployed on Solana Devnet &middot; <a href="/activity" style="color: var(--nebula-purple); text-decoration: none; border-bottom: 1px dashed var(--nebula-purple);">Live Transfer Activity</a></div>
     </footer>
   </div>
 

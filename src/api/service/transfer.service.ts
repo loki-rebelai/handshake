@@ -23,4 +23,15 @@ export class TransferService {
       { populate: ['token', 'pool'] },
     );
   }
+
+  async findRecent(limit = 50): Promise<Transfer[]> {
+    return this.transferRepo.find(
+      {},
+      { populate: ['token', 'pool'], orderBy: { createdAt: 'DESC' }, limit },
+    );
+  }
+
+  async countAll(): Promise<number> {
+    return this.transferRepo.count();
+  }
 }

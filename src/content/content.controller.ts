@@ -1,10 +1,11 @@
 import {
   Controller,
   Get,
+  Req,
   Res,
   NotFoundException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { readFile, stat } from 'fs/promises';
 import { join, resolve, normalize } from 'path';
 
@@ -13,13 +14,28 @@ const CONTENT_DIR = join(__dirname, '..', '..', 'content');
 @Controller()
 export class ContentController {
   @Get('/')
-  async root(@Res() res: Response) {
+  async root(@Req() req: Request, @Res() res: Response) {
+    const accept = req.headers.accept || '';
+    const wantsMd = 'md' in req.query;
+    if (!wantsMd && accept.includes('text/html') && !accept.includes('text/markdown')) {
+      return res.redirect(302, '/human');
+    }
     return this.serveMarkdown(res, 'index.md');
   }
 
-  @Get('humans')
-  async humans(@Res() res: Response) {
+  @Get('agent')
+  async agent(@Res() res: Response) {
+    return this.serveMarkdown(res, 'index.md');
+  }
+
+  @Get('human')
+  async human(@Res() res: Response) {
     return this.serveHtml(res);
+  }
+
+  @Get('humans')
+  async humansRedirect(@Res() res: Response) {
+    res.redirect(301, '/human');
   }
 
   @Get('llms.txt')

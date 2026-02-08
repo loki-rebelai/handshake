@@ -131,7 +131,7 @@ The site serves two audiences:
 
 **Agents** — Markdown-first content delivery. Agents discover the site via `/.well-known/agent.json`, read `/llms.txt` for context, and consume `/skill.md` for the complete API reference. All documentation is served as `text/markdown`.
 
-**Humans** — `GET /humans` serves a landing page.
+**Humans** — `GET /human` serves a landing page. Browsers visiting `/` are redirected to `/human` automatically.
 
 ### Transaction Flow
 

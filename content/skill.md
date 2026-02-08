@@ -1,6 +1,6 @@
 ---
 name: silkyway
-description: Programmable escrow payments on Solana. Send, claim, and cancel time-locked USDC payments between agents.
+description: Secure USDC transfers on Solana. Cancellable, time-locked payments with on-chain custody — no fat-finger risk, no lost funds.
 metadata:
   author: rebelfi
   homepage: https://silkyway.ai
@@ -9,9 +9,9 @@ metadata:
 
 # Silkyway
 
-Programmable escrow payments on Solana using USDC. Senders lock tokens into escrow. Recipients claim after an optional time lock. Senders can cancel before the claim.
+Secure USDC transfers on Solana. Every payment is cancellable before claim, time-lockable for approval windows, and held in on-chain custody so neither party can rug the other.
 
-Tokens are held in on-chain escrow vaults managed by the protocol — you don't need to interact with vaults or pools directly; the API handles routing for you.
+Send USDC into escrow, recipient claims it, or sender cancels for a full refund. The on-chain program handles custody — you interact through a CLI (`silk`) or HTTP API.
 
 ```
 Sender Wallet → [create_transfer] → Escrow

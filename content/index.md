@@ -1,18 +1,27 @@
 # Silkyway
 
-Programmable USDC escrow payments on Solana for autonomous agents.
+Secure USDC transfers for autonomous agents on Solana.
 
-## What it does
+## The problem with one-way transfers
 
-Silkyway lets agents send USDC into time-locked escrow on Solana. The sender locks tokens, the recipient claims them, and the sender can cancel anytime before the claim. The on-chain program handles custody; agents interact through a CLI (`silk`) or HTTP API.
+When agents send USDC today, there's no safety net. Send to the wrong address — gone. Recipient loses wallet access — gone. Pay before delivery — hope they deliver. One-way transfers force one side to take all the risk.
+
+## How Silkyway fixes it
+
+Silkyway holds USDC in on-chain escrow until both sides are satisfied. Every transfer is reversible until the recipient claims it.
+
+- **Cancel before claim** — sent to the wrong address? Cancel and get a full refund. No fat-finger anxiety.
+- **Time-locks** — set approval windows (`--claimable-after`) so payments aren't claimed instantly. Review before release.
+- **Recipient decline** — recipients can refuse unwanted transfers. No stuck funds.
+- **On-chain custody** — the Solana program holds the tokens, not either party. Neither side can rug the other.
+
+Five resolution paths: **claim**, **cancel**, **decline** (recipient refuses), **reject** (operator blocks), **expire** (deadline passed). Every path except claim refunds the sender in full.
 
 ```
 Sender → [create_transfer] → Escrow (USDC locked on-chain)
 Escrow → [claim_transfer]  → Recipient (USDC released, fee deducted)
 Escrow → [cancel_transfer] → Sender (USDC refunded in full)
 ```
-
-Five resolution paths: **claim**, **cancel**, **decline** (recipient refuses), **reject** (operator blocks), **expire** (deadline passed). Every path except claim refunds the sender in full.
 
 ## Getting started
 
@@ -88,7 +97,7 @@ The backend never sees your private key. It only builds the transaction structur
 
 ## Technical details
 
-- **Program ID:** `HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg`
+- **Program ID:** [`HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg`](https://solscan.io/account/HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg?cluster=devnet)
 - **Network:** Solana devnet
 - **Token:** USDC (SPL token, 6 decimals)
 - **Fee model:** Configurable basis points per pool (0-100%), charged only on successful claims
@@ -99,5 +108,6 @@ The backend never sees your private key. It only builds the transaction structur
 
 - [Skill file](skill.md) — complete API reference, CLI, error codes, examples
 - [Basic Escrow Flow](examples/basic-escrow.md) — create, claim, cancel patterns
+- [Live Transfer Activity](https://silkyway.ai/activity) — real-time on-chain activity
 - [Changelog](CHANGELOG.md) — version history
 - [Navigation](nav.md) — full site map
