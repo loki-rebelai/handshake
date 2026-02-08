@@ -6,12 +6,13 @@ import { pay } from './commands/pay.js';
 import { claim } from './commands/claim.js';
 import { cancel } from './commands/cancel.js';
 import { paymentsList, paymentsGet } from './commands/payments.js';
+import { configSetApiUrl, configGetApiUrl, configResetApiUrl } from './commands/config.js';
 import { wrapCommand } from './output.js';
 
 const program = new Command();
 program
-  .name('handshake')
-  .description('Handshake Protocol SDK — Agent payments on Solana')
+  .name('silk')
+  .description('Silkyway SDK — Agent payments on Solana')
   .version('0.1.0')
   .option('--human', 'Human-readable output');
 
@@ -79,5 +80,21 @@ payments
   .argument('<transferPda>', 'Transfer PDA')
   .description('Get transfer details')
   .action(wrapCommand(paymentsGet));
+
+// config
+const config = program.command('config').description('SDK configuration');
+config
+  .command('set-api-url')
+  .argument('<url>', 'API base URL')
+  .description('Set the API base URL')
+  .action(wrapCommand(configSetApiUrl));
+config
+  .command('get-api-url')
+  .description('Show the current API base URL')
+  .action(wrapCommand(configGetApiUrl));
+config
+  .command('reset-api-url')
+  .description('Reset API URL to default')
+  .action(wrapCommand(configResetApiUrl));
 
 program.parse();
