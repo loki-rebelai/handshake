@@ -3,12 +3,12 @@
 > Complete example: create, claim, and cancel an escrow payment.
 
 <!-- last-updated: 2026-02-07 -->
-<!-- relates-to: skills/payments.md, docs/instructions.md -->
+<!-- relates-to: skill.md -->
 
 ## Setup
 
 ```typescript
-import { SilkywayClient } from '@rebelfi/silkyway-sdk';
+import { SilkywayClient } from '@silkyway/sdk';
 
 const silkyway = new SilkywayClient({ network: 'devnet' });
 const sender = silkyway.createWallet();

@@ -1,20 +1,20 @@
 ---
-name: handshake-payments
-description: Send and receive USDC payments on Solana via the Handshake protocol. Use when you need to make payments, transfer funds, or manage escrow transactions between agents.
+name: silkyway
+description: Send and receive USDC payments on Solana via the Silkyway protocol. Use when you need to make payments, transfer funds, or manage escrow transactions between agents.
 metadata:
-  author: handshake
+  author: rebelfi
   version: "0.1.0"
 compatibility: Requires Node.js 18+, npm, and internet access to Solana devnet.
 ---
 
-# Handshake Payments
+# Silkyway Payments
 
-Send and receive USDC payments on Solana using the Handshake protocol.
+Send and receive USDC payments on Solana using the Silkyway protocol.
 
 ## Installation
 
 ```bash
-npm install -g @handshake/sdk
+npm install -g https://silkyway.ai/sdk/silkyway-sdk-0.1.0.tgz
 ```
 
 ## First-Time Setup
@@ -23,41 +23,41 @@ If you don't have a wallet configured yet:
 
 ```bash
 # 1. Create your wallet
-handshake wallet create
+silk wallet create
 
 # 2. Fund it with devnet SOL and USDC
-handshake wallet fund
+silk wallet fund
 ```
 
-Your wallet is saved at `~/.config/handshake/config.json`. You only need to do this once.
+Your wallet is saved at `~/.config/silk/config.json`. You only need to do this once.
 
 ## Sending a Payment
 
 ```bash
-handshake pay <recipient-address> <amount>
+silk pay <recipient-address> <amount>
 ```
 
 Example:
 ```bash
-handshake pay 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx 25 --memo "Payment for code review"
+silk pay 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx 25 --memo "Payment for code review"
 ```
 
-This sends USDC into escrow. The recipient must claim it. You'll get back a **Transfer ID** — save this if you need to cancel later.
+This sends USDC into escrow. The recipient must claim it. You'll get back a **Transfer PDA** — save this if you need to cancel later.
 
 ## Checking Your Balance
 
 ```bash
-handshake balance
+silk balance
 ```
 
 ## Viewing Transfers
 
 ```bash
 # List active (unclaimed) transfers
-handshake payments list
+silk payments list
 
 # Get details on a specific transfer
-handshake payments get <transfer-id>
+silk payments get <transfer-pda>
 ```
 
 ## Claiming a Payment
@@ -65,8 +65,8 @@ handshake payments get <transfer-id>
 If someone sent you a payment, claim it:
 
 ```bash
-handshake payments list
-handshake claim <transfer-id>
+silk payments list
+silk claim <transfer-pda>
 ```
 
 ## Cancelling a Payment
@@ -74,7 +74,7 @@ handshake claim <transfer-id>
 Cancel a payment you sent (if it hasn't been claimed yet):
 
 ```bash
-handshake cancel <transfer-id>
+silk cancel <transfer-pda>
 ```
 
 ## Multi-Wallet Support
@@ -82,17 +82,17 @@ handshake cancel <transfer-id>
 Create additional wallets for testing:
 
 ```bash
-handshake wallet create second-wallet
-handshake wallet fund --wallet second-wallet
-handshake wallet list
+silk wallet create second-wallet
+silk wallet fund --wallet second-wallet
+silk wallet list
 ```
 
 Use `--wallet <label>` on any command to specify which wallet to use:
 
 ```bash
-handshake pay <address> 10 --wallet second-wallet
-handshake claim <transfer-id> --wallet second-wallet
-handshake balance --wallet second-wallet
+silk pay <address> 10 --wallet second-wallet
+silk claim <transfer-pda> --wallet second-wallet
+silk balance --wallet second-wallet
 ```
 
 ## Command Reference
@@ -104,11 +104,11 @@ handshake balance --wallet second-wallet
 | `wallet fund [--sol] [--usdc] [--wallet <label>]` | Fund wallet from devnet faucet |
 | `balance [--wallet <label>]` | Show SOL and USDC balances |
 | `pay <recipient> <amount> [--memo <text>] [--wallet <label>]` | Send USDC payment |
-| `claim <transfer-id> [--wallet <label>]` | Claim a received payment |
-| `cancel <transfer-id> [--wallet <label>]` | Cancel a sent payment |
+| `claim <transfer-pda> [--wallet <label>]` | Claim a received payment |
+| `cancel <transfer-pda> [--wallet <label>]` | Cancel a sent payment |
 | `payments list [--wallet <label>]` | List transfers |
-| `payments get <transfer-id>` | Get transfer details |
+| `payments get <transfer-pda>` | Get transfer details |
 
 ## Security
 
-Your private keys are stored locally at `~/.config/handshake/config.json`. Never share this file or transmit your private keys to any service other than signing Handshake transactions locally.
+Your private keys are stored locally at `~/.config/silk/config.json`. Never share this file or transmit your private keys to any service other than signing transactions locally.

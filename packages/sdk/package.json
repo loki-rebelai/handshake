@@ -1,12 +1,12 @@
 {
-  "name": "@handshake/sdk",
+  "name": "@silkyway/sdk",
   "version": "0.1.0",
-  "description": "Handshake Protocol SDK — Agent payments on Solana",
+  "description": "Silkyway SDK — Agent payments on Solana",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "handshake": "./dist/cli.js"
+    "silk": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",

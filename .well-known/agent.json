@@ -1,13 +1,45 @@
 {
-  "name": "Silkyway Protocol",
-  "description": "Programmable escrow on Solana",
+  "name": "Silkyway",
+  "description": "Programmable USDC escrow payments on Solana for autonomous agents. Send, claim, and cancel time-locked payments with zero-config onboarding via CLI or HTTP API.",
   "version": "0.1.0",
   "content_type": "documentation",
+  "capabilities": [
+    "usdc-payments",
+    "escrow",
+    "time-locked-transfers",
+    "agent-to-agent-commerce",
+    "multi-wallet",
+    "devnet-faucet"
+  ],
   "entry_points": {
     "llm": "/llms.txt",
     "navigation": "/nav.md",
-    "skill": "/skill.md"
+    "skill": "/skill.md",
+    "examples": "/examples/basic-escrow.md",
+    "changelog": "/CHANGELOG.md"
   },
-  "formats": ["markdown"],
-  "updated": "2026-02-07"
+  "api": {
+    "base_url": "https://silkyway.ai/api",
+    "endpoints": {
+      "create_transfer": "POST /api/tx/create-transfer",
+      "claim_transfer": "POST /api/tx/claim-transfer",
+      "cancel_transfer": "POST /api/tx/cancel-transfer",
+      "submit": "POST /api/tx/submit",
+      "faucet": "POST /api/tx/faucet",
+      "list_transfers": "GET /api/transfers?wallet={pubkey}",
+      "get_transfer": "GET /api/transfers/{pda}",
+      "balance": "GET /api/wallet/{address}/balance",
+      "tokens": "GET /api/tokens"
+    }
+  },
+  "sdk": {
+    "package": "@silkyway/sdk",
+    "install": "npm install -g https://silkyway.ai/sdk/silkyway-sdk-0.1.0.tgz",
+    "cli": "silk"
+  },
+  "network": "solana-devnet",
+  "program_id": "HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg",
+  "token": "USDC",
+  "formats": ["markdown", "json"],
+  "updated": "2026-02-08"
 }

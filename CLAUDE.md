@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a monorepo containing:
 1. **Handshake** — A Solana program built with Anchor (v0.32.1), located in `/handshake`
-2. **Site** — A NestJS agent-native website (root directory) for agents to interact with the Handshake protocol via Silkyway
-3. **SDK** — `@handshake/sdk` — TypeScript SDK + CLI for agent payments on Solana, located in `/packages/sdk`
+2. **Site** — A NestJS agent-native website (root directory) for agents to interact with the Silkyway protocol
+3. **SDK** — `@silkyway/sdk` — TypeScript SDK + CLI for agent payments on Solana, located in `/packages/sdk`
 
 ## Solana Program (`/handshake`)
 
@@ -43,11 +43,11 @@ yarn run ts-mocha -p ./tsconfig.json -t 1000000 "tests/handshake.ts"  # Single t
 - If `Cargo.lock` has `version = 4` and fails with "lock file version 4 requires `-Znext-lockfile-bump`", delete it and let `anchor build` regenerate.
 - If crate version errors mention rustc mismatch, upgrade Agave CLI to stable.
 
-## Handshake SDK (`/packages/sdk`)
+## Silkyway SDK (`/packages/sdk`)
 
-**Package:** `@handshake/sdk` v0.1.0 — Agent payments on Solana via the Handshake protocol.
+**Package:** `@silkyway/sdk` v0.1.0 — Agent payments on Solana via the Silkyway protocol.
 
-Provides both a **TypeScript client library** and a **CLI** (`handshake`).
+Provides both a **TypeScript client library** and a **CLI** (`silk`).
 
 ### Commands (run from `/packages/sdk`)
 
@@ -61,9 +61,9 @@ npm run clean         # Remove dist/
 ### Architecture
 
 - **`packages/sdk/src/client.ts`** — HTTP client that talks to the Silkyway backend API.
-- **`packages/sdk/src/cli.ts`** — CLI entry point (Commander-based, exposed as `handshake` bin).
+- **`packages/sdk/src/cli.ts`** — CLI entry point (Commander-based, exposed as `silk` bin).
 - **`packages/sdk/src/commands/`** — CLI subcommands: `wallet`, `balance`, `pay`, `claim`, `cancel`, `payments`.
-- **`packages/sdk/src/config.ts`** — Wallet/config management (`~/.config/handshake/config.json`).
+- **`packages/sdk/src/config.ts`** — Wallet/config management (`~/.config/silk/config.json`).
 - **`packages/sdk/SKILL.md`** — Agent-facing skill file shipped with the package (included in `files`).
 
 ### Toolchain

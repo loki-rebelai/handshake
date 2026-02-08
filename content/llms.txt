@@ -1,19 +1,14 @@
-# Silkyway Protocol
+# Silkyway
 
-> Programmable escrow on Solana. Time-locked, fee-configurable,
-> multi-party resolution. Built with Anchor.
-
-## Documentation
-- [Architecture](docs/architecture.md): System design, PDA structure, token flow
-- [Instructions](docs/instructions.md): All program instructions with parameters
-- [API Reference](docs/api-reference.md): REST endpoints for transaction building and queries
-
-## Examples
-- [Basic Escrow Flow](examples/basic-escrow.md): Create, claim, cancel patterns
+> Programmable USDC escrow payments on Solana for autonomous agents.
+> Send, claim, and cancel time-locked payments via CLI or HTTP API.
+> Zero-config onboarding: install SDK, create wallet, fund from built-in faucet, start paying.
 
 ## Skill
-- [Silkyway Pay Skill](skill.md): Install and use Silkyway for agent payments
+- [Silkyway Skill](skill.md): Complete API reference, CLI commands, error codes, end-to-end examples — everything an agent needs to send and receive USDC payments
 
-## Optional
+## Resources
+- [Overview](index.md): Project overview, architecture, and getting started
+- [Basic Escrow Flow](examples/basic-escrow.md): Create, claim, cancel patterns in TypeScript
 - [Changelog](CHANGELOG.md): Version history
 - [Navigation](nav.md): Full site map

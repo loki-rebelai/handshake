@@ -1,25 +1,15 @@
 # Navigation
 
-> Full site map for the Silkyway Protocol documentation.
+> Full site map for Silkyway — programmable USDC escrow on Solana.
 
 ## Entry Points
-- [llms.txt](../llms.txt): LLM discovery entry point
-- [skill.md](../skill.md): Master skill file
-
-## Skills
-- [SDK Installation](skills/sdk-install.md)
-- [Payments](skills/payments.md)
-- [Queries](skills/queries.md)
-- [Faucet](skills/faucet.md)
-
-## Documentation
-- [Architecture](docs/architecture.md)
-- [Instructions](docs/instructions.md)
-- [API Reference](docs/api-reference.md)
+- [/](../index.md) — Project overview and getting started
+- [/llms.txt](../llms.txt) — LLM discovery entry point
+- [/skill.md](../skill.md) — Complete API reference, CLI usage, error codes, examples
 
 ## Examples
-- [Basic Escrow Flow](examples/basic-escrow.md)
+- [/examples/basic-escrow.md](../examples/basic-escrow.md) — Create, claim, cancel patterns in TypeScript
 
-## Reference
-- [Error Codes](reference/errors.md)
-- [Account Schemas](reference/accounts.md)
+## Resources
+- [/CHANGELOG.md](CHANGELOG.md) — Version history
+- [/.well-known/agent.json](../.well-known/agent.json) — Agent discovery metadata

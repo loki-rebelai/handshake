@@ -1,58 +1,75 @@
 # Silkyway
 
-Programmable escrow payments on Solana devnet. Agents install an SDK, get a wallet with funded devnet tokens, and start sending USDC payments — no setup, no keys to manage beyond a local config file.
+Programmable USDC escrow payments on Solana for autonomous agents.
 
 ## What it does
 
-Silkyway lets agents send USDC into time-locked escrow on Solana. The sender locks tokens, the recipient claims them, and the sender can cancel anytime before the claim. The on-chain program handles custody; agents interact through a CLI or HTTP API.
+Silkyway lets agents send USDC into time-locked escrow on Solana. The sender locks tokens, the recipient claims them, and the sender can cancel anytime before the claim. The on-chain program handles custody; agents interact through a CLI (`silk`) or HTTP API.
 
 ```
-Sender → [create_transfer] → Escrow (USDC locked)
-Escrow → [claim_transfer]  → Recipient (USDC released)
-Escrow → [cancel_transfer] → Sender (USDC refunded)
+Sender → [create_transfer] → Escrow (USDC locked on-chain)
+Escrow → [claim_transfer]  → Recipient (USDC released, fee deducted)
+Escrow → [cancel_transfer] → Sender (USDC refunded in full)
 ```
+
+Five resolution paths: **claim**, **cancel**, **decline** (recipient refuses), **reject** (operator blocks), **expire** (deadline passed). Every path except claim refunds the sender in full.
 
 ## Getting started
 
-Agents install the SDK by reading the [skill file](skill.md), which gives them everything they need:
+```bash
+# Install
+npm install -g https://silkyway.ai/sdk/silkyway-sdk-0.1.0.tgz
 
-1. **Install the CLI** — one `npm install` command
-2. **Create a wallet** — `silk wallet create` generates a Solana keypair stored locally
-3. **Fund it** — `silk wallet fund` hits our faucet for devnet SOL (0.1 SOL) and USDC (100 USDC), no external faucets needed
-4. **Send a payment** — `silk pay <recipient> <amount>` locks USDC into escrow
-5. **Claim or cancel** — the recipient claims with `silk claim`, or the sender cancels with `silk cancel`
+# Create wallet + fund with devnet SOL and USDC
+silk wallet create
+silk wallet fund
 
-No devnet SOL, no USDC, no RPC configuration required to get started. The faucet provides everything.
+# Send 25 USDC into escrow
+silk pay <recipient-address> 25 --memo "Payment for services"
+
+# Recipient claims
+silk claim <transfer-pda>
+```
+
+Zero config required. The built-in faucet provides devnet SOL (0.1) and USDC (100) — no external faucets, no RPC setup.
+
+Read the [skill file](skill.md) for the complete API reference, CLI commands, error codes, and end-to-end examples.
 
 ## Why this matters
 
-Agents can now pay each other. That sounds simple, but it changes what's possible.
+Agents can now pay each other with trust guarantees.
 
-Today, when an agent needs work done by another agent, there's no way to enforce the deal. You either trust the other side or you don't transact. Silkyway adds escrow — the money is locked on-chain, visible to both parties, and only moves when the work is done. The sender keeps a cancel option until the recipient claims, so neither side has to take the other on faith.
+Without escrow, agent payments are either prepaid (sender takes all risk) or postpaid (recipient takes all risk). Silkyway makes the on-chain program the neutral custodian — the sender can't spend locked tokens elsewhere, and the recipient knows the funds exist before doing work.
 
-This is the missing piece for autonomous agent economies. Agents can hire other agents, pay for services, and settle disputes without human intervention — all backed by on-chain finality rather than promises.
+### What this enables
 
-### What's now possible
+- **Agent-to-agent service markets** — pay into escrow, worker claims on delivery
+- **Conditional payments** — time-locked escrow enables approval windows ("pay after 24h if no dispute")
+- **Autonomous bounties** — post a transfer, any qualifying agent claims it
+- **Multi-step workflows** — chain escrow payments: A→B→C, each step independently cancellable
+- **Pay-per-use APIs** — pay per call into escrow, provider claims after serving the request
+- **Refundable deposits** — lock tokens for access, cancel to reclaim when done
 
-- **Agent-to-agent service markets** — one agent hires another for a task, pays into escrow, and the worker claims on delivery
-- **Conditional payments** — time-locked escrow means "pay after 24 hours if no dispute", enabling approval windows
-- **Autonomous bounties** — an agent posts a bounty by creating a transfer; any qualifying agent claims it
-- **Multi-step workflows** — chain escrow payments across agents: A pays B, B pays C, each step independently cancellable
-- **Refundable deposits** — agents put up deposits for access or resources, cancel to reclaim when done
-- **Pay-per-use APIs** — an agent pays per call into escrow; the API provider claims after serving the request
+## Architecture
 
-### The problem it solves
+**On-chain program** (Anchor/Solana) — pool-based escrow with operator model. Operators set fees, manage pools, can pause/reject. Pools support any SPL token (USDC on devnet). Uses `token_interface` for Token-2022 compatibility.
 
-Without escrow, agent payments are either prepaid (sender takes all risk) or postpaid (recipient takes all risk). Silkyway eliminates this by making the on-chain program the neutral custodian. The sender can't spend the locked tokens elsewhere, and the recipient knows the funds exist before doing the work.
+**Backend API** (NestJS) — builds unsigned transactions, accepts signed submissions, indexes on-chain state to PostgreSQL. Private keys never leave the client.
 
-## Network
+**SDK + CLI** (`@silkyway/sdk`) — TypeScript client with Commander.js CLI. Multi-wallet support, JSON output for agents, `--human` flag for humans.
 
-Running on **Solana devnet**. All transactions, tokens, and wallets are devnet only.
+## Technical details
 
-**Program ID:** `HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg`
+- **Program ID:** `HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg`
+- **Network:** Solana devnet
+- **Token:** USDC (SPL token, 6 decimals)
+- **Fee model:** Configurable basis points per pool (0-100%), charged only on successful claims
+- **PDA scheme:** Pool `["pool", pool_id]`, Transfer `["sender", sender, "recipient", recipient, "nonce", nonce]`
+- **Security:** All transfers use `transfer_checked`, mint validated on every instruction, PDA-based authorization
 
 ## Links
 
-- [Skill file](skill.md) — full API reference, CLI usage, error codes, and end-to-end examples
-- [Basic Escrow Flow](examples/basic-escrow.md) — create, claim, cancel patterns in TypeScript
+- [Skill file](skill.md) — complete API reference, CLI, error codes, examples
+- [Basic Escrow Flow](examples/basic-escrow.md) — create, claim, cancel patterns
+- [Changelog](CHANGELOG.md) — version history
 - [Navigation](nav.md) — full site map

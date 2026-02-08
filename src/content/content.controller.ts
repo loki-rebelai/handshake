@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Param,
   Res,
   NotFoundException,
 } from '@nestjs/common';
@@ -43,24 +42,9 @@ export class ContentController {
     return this.serveMarkdown(res, 'CHANGELOG.md');
   }
 
-  @Get('docs/:path')
-  async docs(@Param('path') path: string, @Res() res: Response) {
-    return this.serveMarkdown(res, join('docs', path));
-  }
-
-  @Get('skills/:path')
-  async skills(@Param('path') path: string, @Res() res: Response) {
-    return this.serveMarkdown(res, join('skills', path));
-  }
-
-  @Get('examples/:path')
-  async examples(@Param('path') path: string, @Res() res: Response) {
-    return this.serveMarkdown(res, join('examples', path));
-  }
-
-  @Get('reference/:path')
-  async reference(@Param('path') path: string, @Res() res: Response) {
-    return this.serveMarkdown(res, join('reference', path));
+  @Get('examples/basic-escrow.md')
+  async basicEscrowMd(@Res() res: Response) {
+    return this.serveMarkdown(res, 'examples/basic-escrow.md');
   }
 
   private async serveHtml(res: Response) {

@@ -3,7 +3,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { SdkError } from './errors.js';
 
-const CONFIG_DIR = path.join(os.homedir(), '.config', 'handshake');
+const CONFIG_DIR = path.join(os.homedir(), '.config', 'silk');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
 export interface WalletEntry {
@@ -41,11 +41,11 @@ export function getWallet(config: HandshakeConfig, label?: string): WalletEntry 
   const target = label || config.defaultWallet;
   const wallet = config.wallets.find((w) => w.label === target);
   if (!wallet) {
-    throw new SdkError('WALLET_NOT_FOUND', `Wallet "${target}" not found. Run: handshake wallet create`);
+    throw new SdkError('WALLET_NOT_FOUND', `Wallet "${target}" not found. Run: silk wallet create`);
   }
   return wallet;
 }
 
 export function getApiUrl(config: HandshakeConfig): string {
-  return config.apiUrl || process.env.HANDSHAKE_API_URL || 'https://heliocentrically-psychosomatic-valery.ngrok-free.dev';
+  return config.apiUrl || process.env.SILK_API_URL || 'https://silkyway.ai';
 }
