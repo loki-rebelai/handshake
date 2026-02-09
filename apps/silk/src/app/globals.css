@@ -1,0 +1,287 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "DM Mono", monospace;
+  --font-display: "Anybody", sans-serif;
+  --font-mono: "DM Mono", monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-solar-gold: #fbbf24;
+  --color-solar-amber: #f59e0b;
+  --color-solar-orange: #f97316;
+  --color-nebula-purple: #a855f7;
+  --color-nebula-violet: #7c3aed;
+  --color-star-white: #faf5ff;
+  --color-deep-space: #0c0015;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+}
+
+:root {
+  --radius: 2px;
+  --background: #0c0015;
+  --foreground: #faf5ff;
+  --card: #0c0015;
+  --card-foreground: #faf5ff;
+  --popover: #1a0a2e;
+  --popover-foreground: #faf5ff;
+  --primary: #fbbf24;
+  --primary-foreground: #0c0015;
+  --secondary: #1a0a2e;
+  --secondary-foreground: #faf5ff;
+  --muted: #1a0a2e;
+  --muted-foreground: rgba(250, 245, 255, 0.5);
+  --accent: #1a0a2e;
+  --accent-foreground: #faf5ff;
+  --destructive: #ef4444;
+  --border: rgba(168, 85, 247, 0.15);
+  --input: rgba(168, 85, 247, 0.2);
+  --ring: #fbbf24;
+  --chart-1: #fbbf24;
+  --chart-2: #a855f7;
+  --chart-3: #ec4899;
+  --chart-4: #7c3aed;
+  --chart-5: #f97316;
+  --sidebar: #0c0015;
+  --sidebar-foreground: #faf5ff;
+  --sidebar-primary: #fbbf24;
+  --sidebar-primary-foreground: #0c0015;
+  --sidebar-accent: #1a0a2e;
+  --sidebar-accent-foreground: #faf5ff;
+  --sidebar-border: rgba(168, 85, 247, 0.15);
+  --sidebar-ring: #fbbf24;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Animations */
+@keyframes solar-flare {
+  0%, 100% { text-shadow: 0 0 20px rgba(251, 191, 36, 0.6), 0 0 60px rgba(251, 191, 36, 0.3), 0 0 100px rgba(251, 191, 36, 0.1); }
+  50% { text-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 80px rgba(251, 191, 36, 0.4), 0 0 120px rgba(249, 115, 22, 0.2); }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes corona-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+  50% { transform: translateX(-50%) scale(1.08); opacity: 1; }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+.animate-solar-flare {
+  animation: solar-flare 6s ease-in-out infinite;
+}
+
+.animate-status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Panel — gradient top border line */
+.panel {
+  position: relative;
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.04) 0%, rgba(12, 0, 21, 0.8) 100%);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #a855f7, transparent);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(251, 191, 36, 0.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.panel:hover {
+  border-color: rgba(251, 191, 36, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(168, 85, 247, 0.08);
+}
+
+.panel:hover::before {
+  opacity: 0.8;
+  background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+}
+
+.panel:hover::after {
+  opacity: 1;
+}
+
+/* Gradient top border for header-style cards */
+.gradient-border-top {
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-border-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #fbbf24, #a855f7, transparent);
+  opacity: 0.6;
+}
+
+.gradient-border-top::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #a855f7, #fbbf24, transparent);
+  opacity: 0.3;
+}
+
+/* Wallet adapter style overrides */
+.wallet-adapter-override .wallet-adapter-button {
+  background: rgba(168, 85, 247, 0.06) !important;
+  border: 1px solid rgba(168, 85, 247, 0.2) !important;
+  border-radius: 2px !important;
+  font-family: "DM Mono", monospace !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  letter-spacing: 0.05em !important;
+  transition: all 0.3s !important;
+}
+
+.wallet-adapter-override .wallet-adapter-button:hover {
+  background: rgba(168, 85, 247, 0.12) !important;
+  border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+.wallet-adapter-override .wallet-adapter-button-trigger {
+  background: rgba(251, 191, 36, 0.1) !important;
+  border: 1px solid rgba(251, 191, 36, 0.3) !important;
+  color: #fbbf24 !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.15em !important;
+  font-size: 0.7rem !important;
+}
+
+.wallet-adapter-override .wallet-adapter-button-trigger:hover {
+  background: rgba(251, 191, 36, 0.18) !important;
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.15) !important;
+}
+
+/* Corona glow background effect */
+.corona {
+  position: fixed;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(251, 191, 36, 0.1) 0%,
+    rgba(249, 115, 22, 0.05) 30%,
+    rgba(168, 85, 247, 0.03) 60%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: corona-pulse 8s ease-in-out infinite;
+}
+
+/* Nebula background */
+.nebula {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 800px 600px at 20% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 800px at 80% 60%, rgba(236, 72, 153, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 900px 400px at 50% 90%, rgba(124, 58, 237, 0.06) 0%, transparent 70%);
+}
