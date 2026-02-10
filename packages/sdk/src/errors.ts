@@ -41,6 +41,35 @@ export const ANCHOR_ERROR_MAP: Record<number, { code: string; message: string }>
   6029: { code: 'ANCHOR_ONLY_RECIPIENT_CAN_DECLINE', message: 'Only recipient can decline transfer' },
 };
 
+export const SILKYSIG_ERROR_MAP: Record<number, { code: string; message: string }> = {
+  6000: { code: 'POLICY_UNAUTHORIZED', message: 'Unauthorized: signer is not owner or operator' },
+  6001: { code: 'POLICY_EXCEEDS_TX_LIMIT', message: 'Transfer exceeds operator per-transaction limit' },
+  6002: { code: 'POLICY_EXCEEDS_DAILY_LIMIT', message: 'Transfer exceeds operator daily limit' },
+  6003: { code: 'ACCOUNT_PAUSED', message: 'Account is paused' },
+  6004: { code: 'MAX_OPERATORS', message: 'Maximum operators reached' },
+  6005: { code: 'OPERATOR_NOT_FOUND', message: 'Operator not found' },
+  6006: { code: 'OPERATOR_EXISTS', message: 'Operator slot already occupied' },
+  6007: { code: 'INSUFFICIENT_BALANCE', message: 'Insufficient token balance' },
+  6008: { code: 'MATH_OVERFLOW', message: 'Mathematical overflow' },
+};
+
+export function toSilkysigError(err: unknown): SdkError {
+  if (err instanceof SdkError) return err;
+
+  const message = err instanceof Error ? err.message : String(err);
+
+  const hexMatch = message.match(/0x([0-9a-fA-F]+)/);
+  if (hexMatch) {
+    const errorCode = parseInt(hexMatch[1], 16);
+    const mapped = SILKYSIG_ERROR_MAP[errorCode];
+    if (mapped) {
+      return new SdkError(mapped.code, mapped.message);
+    }
+  }
+
+  return new SdkError('UNKNOWN_ERROR', message);
+}
+
 export function toSdkError(err: unknown): SdkError {
   if (err instanceof SdkError) return err;
 

@@ -12,11 +12,22 @@ export interface WalletEntry {
   privateKey: string;
 }
 
+export interface AccountInfo {
+  pda: string;
+  owner: string;
+  mint: string;
+  mintDecimals: number;
+  operatorIndex: number;
+  perTxLimit: number;
+  syncedAt: string;
+}
+
 export interface HandshakeConfig {
   wallets: WalletEntry[];
   defaultWallet: string;
   preferences: Record<string, unknown>;
   apiUrl?: string;
+  account?: AccountInfo;
 }
 
 function defaultConfig(): HandshakeConfig {

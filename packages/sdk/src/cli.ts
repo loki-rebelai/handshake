@@ -7,6 +7,7 @@ import { claim } from './commands/claim.js';
 import { cancel } from './commands/cancel.js';
 import { paymentsList, paymentsGet } from './commands/payments.js';
 import { configSetApiUrl, configGetApiUrl, configResetApiUrl } from './commands/config.js';
+import { accountSync, accountStatus, accountSend } from './commands/account.js';
 import { wrapCommand } from './output.js';
 
 const program = new Command();
@@ -96,5 +97,27 @@ config
   .command('reset-api-url')
   .description('Reset API URL to default')
   .action(wrapCommand(configResetApiUrl));
+
+// account commands
+const account = program.command('account').description('Manage Silkysig account');
+account
+  .command('sync')
+  .option('--wallet <label>', 'Wallet to sync')
+  .option('--account <pda>', 'Sync a specific account by PDA')
+  .description('Discover and sync your account')
+  .action(wrapCommand(accountSync));
+account
+  .command('status')
+  .option('--wallet <label>', 'Wallet to check')
+  .description('Show account balance and policy')
+  .action(wrapCommand(accountStatus));
+account
+  .command('send')
+  .argument('<recipient>', 'Recipient wallet address')
+  .argument('<amount>', 'Amount in USDC')
+  .option('--memo <text>', 'Payment memo')
+  .option('--wallet <label>', 'Sender wallet')
+  .description('Send from account (policy-enforced)')
+  .action(wrapCommand(accountSend));
 
 program.parse();

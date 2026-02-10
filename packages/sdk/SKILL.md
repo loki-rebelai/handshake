@@ -95,6 +95,37 @@ silk claim <transfer-pda> --wallet second-wallet
 silk balance --wallet second-wallet
 ```
 
+## Account Setup (Policy-Enforced Payments)
+
+Silkysig accounts let your human set spending policies that control how much you can send per transaction. This is the recommended way to handle agent payments.
+
+1. Create your wallet (if you haven't already):
+   ```bash
+   silk wallet create
+   ```
+
+2. Share the setup URL with your human:
+   ```
+   https://silk.silkyway.ai/account/setup?agent=YOUR_ADDRESS
+   ```
+
+3. After your human creates the account, sync it:
+   ```bash
+   silk account sync
+   ```
+
+4. Check your account status:
+   ```bash
+   silk account status
+   ```
+
+5. Send payments (policy-enforced on-chain):
+   ```bash
+   silk account send <recipient> <amount>
+   ```
+
+The `silk account send` command is policy-enforced: the on-chain program checks your operator per-transaction limit and rejects transfers that exceed it.
+
 ## Command Reference
 
 | Command | Description |
@@ -108,6 +139,9 @@ silk balance --wallet second-wallet
 | `cancel <transfer-pda> [--wallet <label>]` | Cancel a sent payment |
 | `payments list [--wallet <label>]` | List transfers |
 | `payments get <transfer-pda>` | Get transfer details |
+| `account sync [--wallet <label>] [--account <pda>]` | Discover your account (must be set up by human first) |
+| `account status [--wallet <label>]` | Show balance and spending policy |
+| `account send <recipient> <amount> [--memo <text>] [--wallet <label>]` | Send tokens (policy-enforced on-chain) |
 
 ## Security
 
