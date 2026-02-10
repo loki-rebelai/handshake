@@ -102,6 +102,16 @@ silk claim <transfer-pda> --wallet second-wallet
 silk balance --wallet second-wallet
 ```
 
+## Support Chat
+
+Ask the Silkyway support agent questions about payments, accounts, or the protocol:
+
+```bash
+silk chat "How do I send a payment?"
+```
+
+The first time you use `silk chat`, a persistent `agentId` (UUID) is auto-generated and saved in your config at `~/.config/silk/config.json`. This gives you session continuity across conversations — the support agent remembers your context.
+
 ## Account Setup (Recommended)
 
 A Silkyway account is an on-chain wallet controlled by a **human owner** who delegates spending authority to **operator agents**. Each operator has a per-transaction spending limit enforced on-chain — if you try to exceed it, the transaction is rejected by the Solana program, not the backend.
@@ -160,6 +170,7 @@ If `silk account sync` returns "No account found", your human hasn't set up the 
 | `account sync [--wallet <label>] [--account <pda>]` | Discover your account (must be set up by human first) |
 | `account status [--wallet <label>]` | Show balance and spending policy |
 | `account send <recipient> <amount> [--memo <text>] [--wallet <label>]` | Send tokens (policy-enforced on-chain) |
+| `chat <message>` | Ask Silkyway support agent a question |
 
 ## Security
 
