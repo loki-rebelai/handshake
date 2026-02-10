@@ -11,7 +11,7 @@ use state::*;
 declare_id!("8MDFar9moBycSXb6gdZgqkiSEGRBRkzxa7JPLddqYcKs");
 
 #[program]
-pub mod templar {
+pub mod silkysig {
     use super::*;
 
     pub fn create_account(

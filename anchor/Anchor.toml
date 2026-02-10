@@ -8,7 +8,7 @@ skip-lint = false
 
 [programs.localnet]
 handshake = "HZ8paEkYZ2hKBwHoVk23doSLEad9K5duASRTGaYogmfg"
-templar = "8MDFar9moBycSXb6gdZgqkiSEGRBRkzxa7JPLddqYcKs"
+silkysig = "8MDFar9moBycSXb6gdZgqkiSEGRBRkzxa7JPLddqYcKs"
 
 [registry]
 url = "https://api.apr.dev"

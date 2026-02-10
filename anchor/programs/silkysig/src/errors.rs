@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum TemplarError {
+pub enum SilkysigError {
     #[msg("Unauthorized: signer is not owner or operator")]
     Unauthorized,
 

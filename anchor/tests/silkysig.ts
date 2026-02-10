@@ -15,7 +15,7 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import { assert } from "chai";
-import { Templar } from "../target/types/templar";
+import { Silkysig } from "../target/types/silkysig";
 
 // PDA seed constant (must match on-chain constant)
 const ACCOUNT_SEED = Buffer.from("account");
@@ -46,11 +46,11 @@ async function getTokenBalance(
 
 // ─── Test Suite ────────────────────────────────────────────────────────────────
 
-describe("templar", () => {
+describe("silkysig", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.templar as Program<Templar>;
+  const program = anchor.workspace.silkysig as Program<Silkysig>;
   const programId = program.programId;
   const { connection } = provider;
   const payer = provider.wallet.publicKey;

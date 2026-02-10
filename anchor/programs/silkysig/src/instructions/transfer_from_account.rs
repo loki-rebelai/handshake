@@ -18,14 +18,14 @@ pub fn transfer_from_account<'a, 'b, 'c, 'info>(
         // Owner: no policy checks
     } else if let Some(idx) = account.find_operator(&signer_key) {
         // Operator: enforce policies
-        require!(!account.is_paused, TemplarError::AccountPaused);
+        require!(!account.is_paused, SilkysigError::AccountPaused);
 
         let operator = &account.operators[idx];
         if operator.per_tx_limit > 0 {
-            require!(amount <= operator.per_tx_limit, TemplarError::ExceedsPerTxLimit);
+            require!(amount <= operator.per_tx_limit, SilkysigError::ExceedsPerTxLimit);
         }
     } else {
-        return Err(TemplarError::Unauthorized.into());
+        return Err(SilkysigError::Unauthorized.into());
     }
 
     // Transfer tokens from account PDA's ATA to recipient's ATA

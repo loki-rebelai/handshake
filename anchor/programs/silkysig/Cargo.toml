@@ -1,5 +1,5 @@
 [package]
-name = "templar"
+name = "silkysig"
 version = "0.1.0"
 description = "Policy-controlled agent accounts on Solana"
 edition = "2021"

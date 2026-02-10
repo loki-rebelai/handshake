@@ -1,25 +1,25 @@
-# Templar Smart Contract — Implementation Plan
+# Silkysig Smart Contract — Implementation Plan
 
 ## Overview
 
-New Anchor program "Templar" — policy-controlled agent accounts on Solana. One account per owner, with up to 3 operators each bound by per-transaction spending limits enforced on-chain. Direct SPL token transfers (no escrow). Lives alongside Handshake in the same Anchor workspace.
+New Anchor program "Silkysig" — policy-controlled agent accounts on Solana. One account per owner, with up to 3 operators each bound by per-transaction spending limits enforced on-chain. Direct SPL token transfers (no escrow). Lives alongside Handshake in the same Anchor workspace.
 
-**Program name:** `templar`
-**Workspace:** `anchor/programs/templar/`
+**Program name:** `silkysig`
+**Workspace:** `anchor/programs/silkysig/`
 **Account PDA:** `seeds = [b"account", owner.key()]`
 
 ---
 
-## Task 1: Scaffold the Templar program
+## Task 1: Scaffold the Silkysig program
 
 **What:** Create the Anchor program directory structure mirroring Handshake's module layout.
 
 **Files to create:**
 
-### `anchor/programs/templar/Cargo.toml`
+### `anchor/programs/silkysig/Cargo.toml`
 ```toml
 [package]
-name = "templar"
+name = "silkysig"
 version = "0.1.0"
 description = "Policy-controlled agent accounts on Solana"
 edition = "2021"
@@ -35,7 +35,7 @@ anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
 anchor-spl = "0.32.1"
 ```
 
-### `anchor/programs/templar/src/lib.rs`
+### `anchor/programs/silkysig/src/lib.rs`
 ```rust
 use anchor_lang::prelude::*;
 
@@ -50,7 +50,7 @@ use state::*;
 declare_id!("TEMP_PLACEHOLDER_WILL_BE_REPLACED_AFTER_KEYGEN");
 
 #[program]
-pub mod templar {
+pub mod silkysig {
     use super::*;
 
     pub fn create_account(
@@ -74,17 +74,17 @@ pub mod templar {
 }
 ```
 
-### `anchor/programs/templar/src/constants.rs`
+### `anchor/programs/silkysig/src/constants.rs`
 ```rust
 pub const ACCOUNT_SEED: &[u8] = b"account";
 ```
 
-### `anchor/programs/templar/src/errors.rs`
+### `anchor/programs/silkysig/src/errors.rs`
 ```rust
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum TemplarError {
+pub enum SilkysigError {
     #[msg("Unauthorized: signer is not owner or operator")]
     Unauthorized,
 
@@ -114,14 +114,14 @@ pub enum TemplarError {
 }
 ```
 
-### `anchor/programs/templar/src/state/mod.rs`
+### `anchor/programs/silkysig/src/state/mod.rs`
 ```rust
 mod account;
 
 pub use account::*;
 ```
 
-### `anchor/programs/templar/src/instructions/mod.rs`
+### `anchor/programs/silkysig/src/instructions/mod.rs`
 ```rust
 mod create_account;
 mod deposit;
@@ -134,20 +134,20 @@ pub use transfer_from_account::*;
 
 **Files to modify:**
 
-### `anchor/Anchor.toml` — add Templar program entry
+### `anchor/Anchor.toml` — add Silkysig program entry
 
 Add under `[programs.localnet]`:
 ```toml
-templar = "TEMP_PLACEHOLDER_WILL_BE_REPLACED_AFTER_KEYGEN"
+silkysig = "TEMP_PLACEHOLDER_WILL_BE_REPLACED_AFTER_KEYGEN"
 ```
 
 **Verification:**
 ```bash
-cd anchor && anchor keys generate templar
+cd anchor && anchor keys generate silkysig
 ```
 Then replace both `TEMP_PLACEHOLDER_WILL_BE_REPLACED_AFTER_KEYGEN` values (in `lib.rs` and `Anchor.toml`) with the generated program ID. Then run:
 ```bash
-cd anchor && anchor build -p templar
+cd anchor && anchor build -p silkysig
 ```
 Expected: compiles with no errors (instructions are stubs/empty at this point — fill in state first, then instructions).
 
@@ -157,7 +157,7 @@ Expected: compiles with no errors (instructions are stubs/empty at this point �
 
 **What:** Define `SilkAccount` and `OperatorSlot` structs.
 
-**File to create:** `anchor/programs/templar/src/state/account.rs`
+**File to create:** `anchor/programs/silkysig/src/state/account.rs`
 
 ```rust
 use anchor_lang::prelude::*;
@@ -239,7 +239,7 @@ impl OperatorSlot {
 
 **Verification:**
 ```bash
-cd anchor && anchor build -p templar
+cd anchor && anchor build -p silkysig
 ```
 Expected: compiles. The `SPACE` constant should equal `8 + 1 + 1 + 32 + 32 + 1 + 1 + (3 * 64) = 268`.
 
@@ -249,7 +249,7 @@ Expected: compiles. The `SPACE` constant should equal `8 + 1 + 1 + 32 + 32 + 1 +
 
 **What:** Owner creates an account PDA with a specified mint. Optionally adds the first operator with a per-tx limit. Initializes the account PDA's associated token account for the specified mint.
 
-**File to create:** `anchor/programs/templar/src/instructions/create_account.rs`
+**File to create:** `anchor/programs/silkysig/src/instructions/create_account.rs`
 
 ```rust
 use anchor_lang::prelude::*;
@@ -348,7 +348,7 @@ pub struct AccountCreated {
 
 **Verification:**
 ```bash
-cd anchor && anchor build -p templar
+cd anchor && anchor build -p silkysig
 ```
 Expected: compiles with no errors.
 
@@ -358,7 +358,7 @@ Expected: compiles with no errors.
 
 **What:** Transfer SPL tokens from the depositor's ATA to the account PDA's ATA. Entry point for wallets that can't send to off-curve ATAs directly.
 
-**File to create:** `anchor/programs/templar/src/instructions/deposit.rs`
+**File to create:** `anchor/programs/silkysig/src/instructions/deposit.rs`
 
 ```rust
 use anchor_lang::prelude::*;
@@ -446,7 +446,7 @@ pub struct Deposited {
 
 **Verification:**
 ```bash
-cd anchor && anchor build -p templar
+cd anchor && anchor build -p silkysig
 ```
 Expected: compiles with no errors.
 
@@ -456,7 +456,7 @@ Expected: compiles with no errors.
 
 **What:** The critical instruction. Operator or owner sends tokens from the account PDA's ATA to a recipient. If signer is an operator, enforces `per_tx_limit`. If signer is the owner, no policy checks. Emits event. Signer pays recipient ATA initialization if needed.
 
-**File to create:** `anchor/programs/templar/src/instructions/transfer_from_account.rs`
+**File to create:** `anchor/programs/silkysig/src/instructions/transfer_from_account.rs`
 
 ```rust
 use anchor_lang::prelude::*;
@@ -479,14 +479,14 @@ pub fn transfer_from_account<'a, 'b, 'c, 'info>(
         // Owner: no policy checks
     } else if let Some(idx) = account.find_operator(&signer_key) {
         // Operator: enforce policies
-        require!(!account.is_paused, TemplarError::AccountPaused);
+        require!(!account.is_paused, SilkysigError::AccountPaused);
 
         let operator = &account.operators[idx];
         if operator.per_tx_limit > 0 {
-            require!(amount <= operator.per_tx_limit, TemplarError::ExceedsPerTxLimit);
+            require!(amount <= operator.per_tx_limit, SilkysigError::ExceedsPerTxLimit);
         }
     } else {
-        return Err(TemplarError::Unauthorized.into());
+        return Err(SilkysigError::Unauthorized.into());
     }
 
     // Transfer tokens from account PDA's ATA to recipient's ATA
@@ -588,7 +588,7 @@ pub struct TransferExecuted {
 
 **Verification:**
 ```bash
-cd anchor && anchor build -p templar
+cd anchor && anchor build -p silkysig
 ```
 Expected: compiles with no errors. Full program builds successfully.
 
@@ -596,24 +596,24 @@ Expected: compiles with no errors. Full program builds successfully.
 
 ## Task 6: Generate program keypair and update IDs
 
-**What:** Generate the Templar program keypair and replace placeholder IDs.
+**What:** Generate the Silkysig program keypair and replace placeholder IDs.
 
 **Steps:**
 ```bash
 cd anchor
-anchor keys generate templar
+anchor keys generate silkysig
 # Note the output pubkey, e.g. "Temp1arXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 ```
 
 **Files to update:**
-1. `anchor/programs/templar/src/lib.rs` — replace `TEMP_PLACEHOLDER_WILL_BE_REPLACED_AFTER_KEYGEN` in `declare_id!()` with the generated pubkey
+1. `anchor/programs/silkysig/src/lib.rs` — replace `TEMP_PLACEHOLDER_WILL_BE_REPLACED_AFTER_KEYGEN` in `declare_id!()` with the generated pubkey
 2. `anchor/Anchor.toml` — replace `TEMP_PLACEHOLDER_WILL_BE_REPLACED_AFTER_KEYGEN` under `[programs.localnet]` with the generated pubkey
 
 **Verification:**
 ```bash
-cd anchor && anchor build -p templar
+cd anchor && anchor build -p silkysig
 ```
-Expected: builds successfully with the real program ID. Check `anchor keys list` shows both `handshake` and `templar`.
+Expected: builds successfully with the real program ID. Check `anchor keys list` shows both `handshake` and `silkysig`.
 
 ---
 
@@ -621,14 +621,14 @@ Expected: builds successfully with the real program ID. Check `anchor keys list`
 
 **What:** TypeScript integration tests for all 3 instructions + error cases. Follows the same pattern as `anchor/tests/handshake.ts` — uses `@coral-xyz/anchor`, `@solana/spl-token`, `@solana/web3.js`, `chai`, `ts-mocha`.
 
-**File to create:** `anchor/tests/templar.ts`
+**File to create:** `anchor/tests/silkysig.ts`
 
-The test file should import the generated `Templar` type from `../target/types/templar` and cover the following test cases:
+The test file should import the generated `Silkysig` type from `../target/types/silkysig` and cover the following test cases:
 
 ### Test structure:
 
 ```
-describe("templar")
+describe("silkysig")
   before()
     - Create test actors: owner (Keypair), operator (Keypair), outsider (Keypair)
     - Fund all actors with SOL
@@ -708,11 +708,11 @@ describe("templar")
 ```bash
 cd anchor && anchor test
 ```
-Expected: all Handshake tests still pass + all Templar tests pass.
+Expected: all Handshake tests still pass + all Silkysig tests pass.
 
-Alternative (Templar tests only):
+Alternative (Silkysig tests only):
 ```bash
-cd anchor && yarn run ts-mocha -p ./tsconfig.json -t 1000000 "tests/templar.ts"
+cd anchor && yarn run ts-mocha -p ./tsconfig.json -t 1000000 "tests/silkysig.ts"
 ```
 
 ---
@@ -725,13 +725,13 @@ cd anchor && yarn run ts-mocha -p ./tsconfig.json -t 1000000 "tests/templar.ts"
 ```bash
 cd anchor
 anchor build          # Both programs
-anchor test           # All tests (handshake + templar)
+anchor test           # All tests (handshake + silkysig)
 anchor keys list      # Shows both program IDs
 ```
 
 **Expected output:**
-- `anchor build`: both `handshake` and `templar` compile without errors
-- `anchor test`: all existing Handshake tests pass, all new Templar tests pass
+- `anchor build`: both `handshake` and `silkysig` compile without errors
+- `anchor test`: all existing Handshake tests pass, all new Silkysig tests pass
 - `anchor keys list`: shows both program IDs
 
 ---
