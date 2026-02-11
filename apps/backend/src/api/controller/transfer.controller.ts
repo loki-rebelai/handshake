@@ -8,10 +8,15 @@ import {
 } from '@nestjs/common';
 import { PublicKey } from '@solana/web3.js';
 import { TransferService } from '../service/transfer.service';
+import { SolanaService } from '../../solana/solana.service';
+import { TransferStatus } from '../../db/models/Transfer';
 
 @Controller('api/transfers')
 export class TransferController {
-  constructor(private readonly transferService: TransferService) {}
+  constructor(
+    private readonly transferService: TransferService,
+    private readonly solanaService: SolanaService,
+  ) {}
 
   @Get()
   async listTransfers(@Query('wallet') wallet: string) {
@@ -40,6 +45,16 @@ export class TransferController {
     if (!transfer) {
       throw new NotFoundException({ ok: false, error: 'NOT_FOUND', message: 'Transfer not found' });
     }
+
+    // For ACTIVE transfers, verify the on-chain PDA still exists
+    if (transfer.status === TransferStatus.ACTIVE) {
+      const handshake = this.solanaService.getHandshakeClient();
+      const onChain = await handshake.fetchTransfer(new PublicKey(pda));
+      if (!onChain) {
+        throw new NotFoundException({ ok: false, error: 'NOT_FOUND', message: 'Transfer not found' });
+      }
+    }
+
     return { ok: true, data: { transfer } };
   }
 }

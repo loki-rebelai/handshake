@@ -94,8 +94,8 @@ export default function TransferDetailPage() {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-[1200px] flex-col items-center justify-center px-8">
         <div className="border border-nebula-purple/20 bg-nebula-purple/[0.04] p-12 text-center">
-          <h2 className="font-display text-2xl font-black uppercase tracking-wide text-star-white">Not Found</h2>
-          <p className="mt-2 text-[0.85rem] text-star-white/50">This transfer does not exist or has been removed.</p>
+          <h2 className="font-display text-2xl font-black uppercase tracking-wide text-star-white">Payment Not Found</h2>
+          <p className="mt-2 text-[0.85rem] text-star-white/50">This payment may have already been claimed or cancelled.</p>
           <Link href="/transfers" className="mt-4 inline-block text-[0.8rem] text-nebula-purple underline underline-offset-4 transition-colors hover:text-solar-gold">
             Back to transfers
           </Link>
@@ -153,6 +153,14 @@ export default function TransferDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Instructions */}
+      <InstructionBanner
+        isConnected={isConnected}
+        isSender={isSender}
+        isRecipient={isRecipient}
+        isActive={isActive}
+      />
 
       {/* Transactions */}
       <div className="mb-6 border border-nebula-purple/20 p-6" style={{ background: 'linear-gradient(180deg, rgba(168, 85, 247, 0.04) 0%, rgba(12, 0, 21, 0.8) 100%)' }}>
@@ -247,6 +255,32 @@ function ShareLink({ pda }: { pda: string }) {
           {copied ? 'Copied!' : 'Copy Link'}
         </button>
       </div>
+    </div>
+  );
+}
+
+function InstructionBanner({ isConnected, isSender, isRecipient, isActive }: {
+  isConnected: boolean;
+  isSender: boolean;
+  isRecipient: boolean;
+  isActive: boolean;
+}) {
+  if (!isActive) return null;
+
+  let message: string;
+  if (!isConnected) {
+    message = 'Connect your wallet to claim or manage this transfer.';
+  } else if (isRecipient) {
+    message = 'This payment is for you. Claim it below.';
+  } else if (isSender) {
+    message = 'You sent this payment. You can cancel it if it hasn\'t been claimed.';
+  } else {
+    message = 'You\'re viewing a transfer between other parties.';
+  }
+
+  return (
+    <div className="mb-6 border border-nebula-purple/20 bg-nebula-purple/[0.04] px-6 py-4">
+      <p className="text-[0.8rem] text-star-white/60">{message}</p>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Keypair, Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
-import { loadConfig, getWallet, getApiUrl } from '../config.js';
+import { loadConfig, getWallet, getApiUrl, getClaimUrl } from '../config.js';
 import { createHttpClient } from '../client.js';
 import { outputSuccess } from '../output.js';
 import { validatePay } from '../validate.js';
@@ -36,5 +36,6 @@ export async function pay(recipient: string, amount: string, opts: { memo?: stri
   });
 
   const { txid } = submitRes.data.data;
-  outputSuccess({ action: 'pay', transferPda, txid, amount: amountNum, recipient });
+  const claimUrl = getClaimUrl(config, transferPda);
+  outputSuccess({ action: 'pay', transferPda, txid, amount: amountNum, recipient, claimUrl });
 }

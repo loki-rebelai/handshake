@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react';
 
 export type SolanaCluster = 'mainnet-beta' | 'devnet';
 
@@ -45,6 +45,16 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, c);
     setClusterState(c);
   }, []);
+
+  // Apply ?cluster=devnet from URL (e.g., claim links)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const urlCluster = params.get('cluster');
+    if (urlCluster === 'devnet' || urlCluster === 'mainnet-beta') {
+      setCluster(urlCluster);
+    }
+  }, [setCluster]);
 
   const value = useMemo(() => {
     const config = CLUSTER_CONFIGS[cluster];
