@@ -1,6 +1,7 @@
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { loadConfig, saveConfig, ensureAgentId } from '../config.js';
+import { initContacts } from '../contacts.js';
 import { outputSuccess } from '../output.js';
 
 export async function init() {
@@ -24,6 +25,7 @@ export async function init() {
   }
 
   const agentIdResult = ensureAgentId(config);
+  const contactsCreated = initContacts();
 
   if (walletCreated || agentIdResult.created) {
     saveConfig(config);
@@ -36,6 +38,7 @@ export async function init() {
     wallet_address: mainWallet.address,
     agent_id_created: agentIdResult.created,
     agent_id: agentIdResult.agentId,
-    message: (walletCreated || agentIdResult.created) ? 'Initialization complete' : 'Already initialized',
+    contacts_created: contactsCreated,
+    message: (walletCreated || agentIdResult.created || contactsCreated) ? 'Initialization complete' : 'Already initialized',
   });
 }

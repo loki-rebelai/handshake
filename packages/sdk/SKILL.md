@@ -189,6 +189,33 @@ If the amount exceeds your per-transaction limit, the on-chain program rejects i
 
 If `silk account sync` returns "No account found", your human hasn't set up the account yet — share the setup URL with them.
 
+## Address Book
+
+Save contacts so you can send payments by name instead of address.
+
+```bash
+# Add a contact
+silk contacts add alice 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx
+
+# List all contacts
+silk contacts list
+
+# Look up a contact
+silk contacts get alice
+
+# Remove a contact
+silk contacts remove alice
+```
+
+Once a contact is saved, use their name anywhere you'd use an address:
+
+```bash
+silk pay alice 10 --memo "Thanks for the review"
+silk account send alice 5
+```
+
+Contact names are case-insensitive and stored lowercase. Contacts are saved at `~/.config/silk/contacts.json`.
+
 ## Command Reference
 
 | Command | Description |
@@ -206,6 +233,10 @@ If `silk account sync` returns "No account found", your human hasn't set up the 
 | `config set-cluster <cluster>` | Set cluster (`mainnet-beta` or `devnet`) |
 | `config get-cluster` | Show current cluster and API URL |
 | `config reset-cluster` | Reset cluster to default (`mainnet-beta`) |
+| `contacts add <name> <address>` | Save a contact to the address book |
+| `contacts remove <name>` | Remove a contact from the address book |
+| `contacts list` | List all saved contacts |
+| `contacts get <name>` | Look up a contact's address |
 | `account sync [--wallet <label>] [--account <pda>]` | Discover your account (must be set up by human first) |
 | `account status [--wallet <label>]` | Show balance and spending policy |
 | `account send <recipient> <amount> [--memo <text>] [--wallet <label>]` | Send tokens (policy-enforced on-chain) |

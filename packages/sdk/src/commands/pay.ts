@@ -4,8 +4,10 @@ import { loadConfig, getWallet, getApiUrl } from '../config.js';
 import { createHttpClient } from '../client.js';
 import { outputSuccess } from '../output.js';
 import { validatePay } from '../validate.js';
+import { resolveRecipient } from '../contacts.js';
 
 export async function pay(recipient: string, amount: string, opts: { memo?: string; wallet?: string }) {
+  recipient = resolveRecipient(recipient);
   const config = loadConfig();
   const wallet = getWallet(config, opts.wallet);
   const client = createHttpClient({ baseUrl: getApiUrl(config) });

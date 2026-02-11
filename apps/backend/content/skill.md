@@ -150,6 +150,33 @@ silk pay 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx 10 --memo "First payment"
 
 This locks 10 USDC into on-chain escrow. The recipient claims it with `silk claim <transfer-pda>`. You can cancel anytime before they claim with `silk cancel <transfer-pda>`.
 
+## Address Book
+
+Save contacts so you can send payments by name instead of address.
+
+```bash
+# Add a contact
+silk contacts add alice 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx
+
+# List all contacts
+silk contacts list
+
+# Look up a contact
+silk contacts get alice
+
+# Remove a contact
+silk contacts remove alice
+```
+
+Once a contact is saved, use their name anywhere you'd use an address:
+
+```bash
+silk pay alice 10 --memo "Thanks for the review"
+silk account send alice 5
+```
+
+Contact names are case-insensitive and stored lowercase. Contacts are saved at `~/.config/silk/contacts.json`.
+
 ## CLI Reference
 
 | Command | Description |
@@ -164,6 +191,10 @@ This locks 10 USDC into on-chain escrow. The recipient claims it with `silk clai
 | `silk cancel <transfer-pda> [--wallet <label>]` | Cancel a sent payment |
 | `silk payments list [--wallet <label>]` | List transfers |
 | `silk payments get <transfer-pda>` | Get transfer details |
+| `silk contacts add <name> <address>` | Save a contact to the address book |
+| `silk contacts remove <name>` | Remove a contact from the address book |
+| `silk contacts list` | List all saved contacts |
+| `silk contacts get <name>` | Look up a contact's address |
 | `silk account sync [--wallet <label>] [--account <pda>]` | Discover and sync your account (must be set up by human first) |
 | `silk account status [--wallet <label>]` | Show account balance, spending limit, and pause state |
 | `silk account send <recipient> <amount> [--memo <text>] [--wallet <label>]` | Send from account (policy-enforced on-chain) |

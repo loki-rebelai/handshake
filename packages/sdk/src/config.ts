@@ -4,7 +4,7 @@ import os from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { SdkError } from './errors.js';
 
-const CONFIG_DIR = path.join(os.homedir(), '.config', 'silk');
+export const CONFIG_DIR = path.join(os.homedir(), '.config', 'silk');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
 export interface WalletEntry {
@@ -25,7 +25,7 @@ export interface AccountInfo {
 
 export type SolanaCluster = 'mainnet-beta' | 'devnet';
 
-export interface HandshakeConfig {
+export interface SilkConfig {
   wallets: WalletEntry[];
   defaultWallet: string;
   preferences: Record<string, unknown>;
@@ -35,25 +35,25 @@ export interface HandshakeConfig {
   agentId?: string;
 }
 
-function defaultConfig(): HandshakeConfig {
+function defaultConfig(): SilkConfig {
   return { wallets: [], defaultWallet: 'main', preferences: {}, cluster: 'mainnet-beta' };
 }
 
-export function loadConfig(): HandshakeConfig {
+export function loadConfig(): SilkConfig {
   try {
     const raw = fs.readFileSync(CONFIG_FILE, 'utf-8');
-    return JSON.parse(raw) as HandshakeConfig;
+    return JSON.parse(raw) as SilkConfig;
   } catch {
     return defaultConfig();
   }
 }
 
-export function saveConfig(config: HandshakeConfig): void {
+export function saveConfig(config: SilkConfig): void {
   fs.mkdirSync(CONFIG_DIR, { recursive: true });
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
 }
 
-export function getWallet(config: HandshakeConfig, label?: string): WalletEntry {
+export function getWallet(config: SilkConfig, label?: string): WalletEntry {
   const target = label || config.defaultWallet;
   const wallet = config.wallets.find((w) => w.label === target);
   if (!wallet) {
@@ -67,15 +67,15 @@ const CLUSTER_API_URLS: Record<SolanaCluster, string> = {
   'devnet': 'https://devnet-api.silkyway.ai',
 };
 
-export function getCluster(config: HandshakeConfig): SolanaCluster {
+export function getCluster(config: SilkConfig): SolanaCluster {
   return config.cluster || 'mainnet-beta';
 }
 
-export function getApiUrl(config: HandshakeConfig): string {
+export function getApiUrl(config: SilkConfig): string {
   return config.apiUrl || process.env.SILK_API_URL || CLUSTER_API_URLS[getCluster(config)];
 }
 
-export function ensureAgentId(config: HandshakeConfig): { agentId: string; created: boolean } {
+export function ensureAgentId(config: SilkConfig): { agentId: string; created: boolean } {
   if (config.agentId) {
     return { agentId: config.agentId, created: false };
   }
@@ -84,7 +84,7 @@ export function ensureAgentId(config: HandshakeConfig): { agentId: string; creat
   return { agentId, created: true };
 }
 
-export function getAgentId(config: HandshakeConfig): string {
+export function getAgentId(config: SilkConfig): string {
   const result = ensureAgentId(config);
   if (result.created) {
     saveConfig(config);

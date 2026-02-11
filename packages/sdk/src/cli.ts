@@ -8,6 +8,7 @@ import { cancel } from './commands/cancel.js';
 import { paymentsList, paymentsGet } from './commands/payments.js';
 import { configSetApiUrl, configGetApiUrl, configResetApiUrl, configSetCluster, configGetCluster, configResetCluster } from './commands/config.js';
 import { accountSync, accountStatus, accountSend } from './commands/account.js';
+import { contactsAdd, contactsRemove, contactsList, contactsGet } from './commands/contacts.js';
 import { chat } from './commands/chat.js';
 import { init } from './commands/init.js';
 import { wrapCommand } from './output.js';
@@ -140,6 +141,29 @@ account
   .option('--wallet <label>', 'Sender wallet')
   .description('Send from account (policy-enforced)')
   .action(wrapCommand(accountSend));
+
+// contacts commands
+const contacts = program.command('contacts').description('Manage address book');
+contacts
+  .command('add')
+  .argument('<name>', 'Contact name')
+  .argument('<address>', 'Solana wallet address')
+  .description('Add a contact')
+  .action(wrapCommand(contactsAdd));
+contacts
+  .command('remove')
+  .argument('<name>', 'Contact name')
+  .description('Remove a contact')
+  .action(wrapCommand(contactsRemove));
+contacts
+  .command('list')
+  .description('List all contacts')
+  .action(wrapCommand(contactsList));
+contacts
+  .command('get')
+  .argument('<name>', 'Contact name')
+  .description('Get a contact address')
+  .action(wrapCommand(contactsGet));
 
 // chat
 program

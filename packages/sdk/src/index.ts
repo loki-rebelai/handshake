@@ -1,5 +1,7 @@
-export { loadConfig, saveConfig, getWallet, getApiUrl } from './config.js';
-export type { HandshakeConfig, WalletEntry } from './config.js';
+export { loadConfig, saveConfig, getWallet, getApiUrl, CONFIG_DIR } from './config.js';
+export type { SilkConfig, WalletEntry } from './config.js';
+export { loadContacts, saveContacts, addContact, removeContact, getContact, listContacts, resolveRecipient, initContacts } from './contacts.js';
+export type { Contact, ContactsStore } from './contacts.js';
 export { createHttpClient } from './client.js';
 export type { ClientConfig } from './client.js';
 export { getTransfer } from './transfers.js';

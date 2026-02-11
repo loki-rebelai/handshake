@@ -5,6 +5,7 @@ import { createHttpClient } from '../client.js';
 import { outputSuccess } from '../output.js';
 import { SdkError, toSilkysigError } from '../errors.js';
 import { validateAddress, validateAmount } from '../validate.js';
+import { resolveRecipient } from '../contacts.js';
 
 interface OperatorSlot {
   index: number;
@@ -168,6 +169,7 @@ export async function accountStatus(opts: { wallet?: string }) {
 }
 
 export async function accountSend(recipient: string, amount: string, opts: { memo?: string; wallet?: string }) {
+  recipient = resolveRecipient(recipient);
   const config = loadConfig();
   const wallet = getWallet(config, opts.wallet);
 
