@@ -1,5 +1,10 @@
+import { config } from 'dotenv';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+
+// Load environment-specific .env file
+const envFile = process.env.ENV_FILE || '.env';
+config({ path: envFile });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
