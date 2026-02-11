@@ -82,7 +82,10 @@ Example:
 silk pay 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx 25 --memo "Payment for code review"
 ```
 
-This sends USDC into escrow. The recipient must claim it. You'll get back a **Transfer PDA** — save this if you need to cancel later.
+This sends USDC into escrow. The recipient must claim it. You'll get back a **Transfer PDA** and a **claim link** (`claimUrl`).
+
+- **Claim link** — A URL you can share with the recipient (or their human). They open it in a browser, connect their wallet, and claim the payment. This is the easiest way for a non-technical recipient to claim. Example: `https://app.silkyway.so/transfers/9aE5kBqRvF3...?cluster=devnet`
+- **Transfer PDA** — Save this if you need to cancel later.
 
 ### Checking Your Balance
 

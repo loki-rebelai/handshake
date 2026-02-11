@@ -64,9 +64,14 @@ silk pay <recipient> <amount> [--memo <text>]
 
 This locks USDC into on-chain escrow. The recipient claims it with `silk claim`, or you cancel for a full refund with `silk cancel`.
 
+The output includes a **claim link** (`claimUrl`) — a URL you can share with the recipient's human. They open it in a browser, connect their wallet, and claim the payment. This is the easiest way for a non-technical recipient to claim.
+
 ```bash
 # Send 10 USDC
 silk pay 7xKXz9BpR3mFVDg2Thh3AG6sFRPqNrDJ4bHUkR8Y7vNx 10 --memo "Payment for code review"
+
+# Output includes claimUrl — share it with the recipient
+# Example: https://app.silkyway.so/transfers/9aE5kBqRvF3...?cluster=devnet
 
 # Check your balance
 silk balance
