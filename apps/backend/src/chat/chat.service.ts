@@ -1,9 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execAsync = promisify(exec);
 
 interface ChatError {
   code: string;
@@ -14,85 +16,86 @@ interface ChatError {
 export class ChatService implements OnModuleInit {
   private readonly logger = new Logger(ChatService.name);
   private systemPrompt = 'You are a helpful assistant for SilkyWay.';
-
-  private readonly gatewayUrl: string;
-  private readonly authToken: string;
   private readonly agentId: string;
 
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-  ) {
-    this.gatewayUrl = this.configService.get<string>(
-      'OPENCLAW_GATEWAY_URL',
-      'http://127.0.0.1:18789',
-    );
-    this.authToken = this.configService.get<string>('OPENCLAW_AUTH_TOKEN', '');
+  constructor(private readonly configService: ConfigService) {
     this.agentId = this.configService.get<string>('OPENCLAW_AGENT_ID', 'main');
-
-    if (!this.authToken) {
-      this.logger.warn('OPENCLAW_AUTH_TOKEN is not set');
-    }
   }
 
   async onModuleInit() {
     try {
       const promptPath = join(__dirname, 'prompts', 'system-prompt.txt');
       this.systemPrompt = await readFile(promptPath, 'utf-8');
+      this.logger.log('Loaded system prompt');
     } catch {
       this.logger.warn('Could not load system-prompt.txt, using default');
     }
   }
 
-  async sendMessage(agentId: string, message: string): Promise<string> {
-    const url = `${this.gatewayUrl}/v1/chat/completions`;
-    const body = {
-      model: `openclaw:${this.agentId}`,
-      messages: [
-        { role: 'system', content: this.systemPrompt },
-        { role: 'user', content: message },
-      ],
-      user: agentId,
-      temperature: 0.7,
-      max_tokens: 1000,
-    };
+  async sendMessage(sessionId: string, message: string): Promise<string> {
+    // Note: OpenClaw agents have their own system prompts in their workspace
+    // The system-prompt.txt file in this service is no longer used
+    // System context should be configured in OpenClaw agent's workspace (SOUL.md/AGENTS.md)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
-    }
+    // Build openclaw command
+    const cmd = `openclaw agent --message ${this.escapeShellArg(message)} --agent ${this.escapeShellArg(this.agentId)} --session-id ${this.escapeShellArg(sessionId)} --json`;
 
-    let response;
     try {
-      response = await firstValueFrom(
-        this.httpService.post(url, body, { headers, timeout: 30000 }),
-      );
+      const { stdout, stderr } = await execAsync(cmd, {
+        timeout: 30000, // 30 second timeout
+        maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+      });
+
+      // Extract JSON from stdout (openclaw may output UI text before JSON)
+      const jsonStart = stdout.indexOf('{');
+      if (jsonStart === -1) {
+        this.logger.error(`No JSON found in openclaw output: ${stdout}`);
+        throw { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
+      }
+
+      // Parse JSON response
+      const jsonOutput = stdout.substring(jsonStart);
+      const result = JSON.parse(jsonOutput);
+
+      // Extract response content from openclaw agent output
+      // OpenClaw agent returns: { result: { payloads: [{ text: "..." }] } }
+      const payloads = result?.result?.payloads;
+      if (!payloads || !Array.isArray(payloads) || payloads.length === 0) {
+        this.logger.error(`Invalid response structure from openclaw agent: ${jsonOutput}`);
+        throw { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
+      }
+
+      const content = payloads[0]?.text;
+      if (!content) {
+        this.logger.error(`Empty response from openclaw agent: ${jsonOutput}`);
+        throw { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
+      }
+
+      return content;
     } catch (err: any) {
-      const code = err?.code;
-      const status = err?.response?.status;
-
-      if (code === 'ECONNREFUSED' || code === 'ECONNABORTED' || code === 'ETIMEDOUT') {
-        this.logger.warn(`OpenClaw unavailable: ${code}`);
+      // Handle specific error cases
+      if (err.code === 'ENOENT') {
+        this.logger.error('openclaw CLI not found in PATH');
         throw { code: 'OPENCLAW_UNAVAILABLE', message: 'Support chat is temporarily unavailable' };
       }
 
-      if (status === 401 || status === 403) {
-        this.logger.error(`OpenClaw auth error: ${status}`);
+      if (err.code === 'ETIMEDOUT') {
+        this.logger.error('openclaw agent command timed out');
         throw { code: 'OPENCLAW_UNAVAILABLE', message: 'Support chat is temporarily unavailable' };
       }
 
-      this.logger.error(`OpenClaw error: ${JSON.stringify(err?.response?.data || err?.message)}`);
+      // Log stderr if available
+      if (err.stderr) {
+        this.logger.error(`openclaw agent stderr: ${err.stderr}`);
+      }
+
+      this.logger.error(`openclaw agent error: ${err.message || JSON.stringify(err)}`);
       throw { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
     }
+  }
 
-    const content = response.data?.choices?.[0]?.message?.content;
-    if (!content) {
-      this.logger.error('Empty response from OpenClaw');
-      throw { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' };
-    }
-
-    return content;
+  private escapeShellArg(arg: string): string {
+    // Escape single quotes and wrap in single quotes
+    return `'${arg.replace(/'/g, "'\\''")}'`;
   }
 }
