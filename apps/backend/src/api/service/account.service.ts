@@ -35,6 +35,10 @@ export class AccountService {
       // ATA may not exist yet
     }
 
+    if (account.driftUser) {
+      balance = Number(account.principalBalance);
+    }
+
     return { pda, account, balance, mintDecimals };
   }
 
