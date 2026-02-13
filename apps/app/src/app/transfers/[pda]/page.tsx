@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { toast } from 'react-toastify';
 import { SolscanLink } from '@/components/SolscanLink';
 import { solscanUrl } from '@/lib/solscan';
+import { useCluster } from '@/contexts/ClusterContext';
 import type { TransferInfo } from '@silkysquad/silk/dist/transfers.js';
 
 function formatAmount(raw: string | number, decimals: number) {
@@ -227,8 +228,10 @@ function TxLink({ label, txid }: { label: string; txid: string }) {
 }
 
 function ShareLink({ pda }: { pda: string }) {
+  const { cluster } = useCluster();
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== 'undefined' ? `${window.location.origin}/transfers/${pda}` : '';
+  const clusterParam = cluster !== 'mainnet-beta' ? `?cluster=${cluster}` : '';
+  const url = typeof window !== 'undefined' ? `${window.location.origin}/transfers/${pda}${clusterParam}` : '';
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(url);

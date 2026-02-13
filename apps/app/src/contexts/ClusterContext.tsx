@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 
 export type SolanaCluster = 'mainnet-beta' | 'devnet';
 
@@ -31,6 +31,13 @@ const CLUSTER_CONFIGS: Record<SolanaCluster, ClusterConfig> = {
 
 function readStoredCluster(): SolanaCluster {
   if (typeof window === 'undefined') return 'mainnet-beta';
+  // Check URL params first (for external claim links like ?cluster=devnet)
+  const params = new URLSearchParams(window.location.search);
+  const urlCluster = params.get('cluster');
+  if (urlCluster === 'devnet' || urlCluster === 'mainnet-beta') {
+    localStorage.setItem(STORAGE_KEY, urlCluster);
+    return urlCluster;
+  }
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === 'mainnet-beta' || stored === 'devnet') return stored;
   return 'mainnet-beta';
@@ -45,16 +52,6 @@ export function ClusterProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, c);
     setClusterState(c);
   }, []);
-
-  // Apply ?cluster=devnet from URL (e.g., claim links)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const urlCluster = params.get('cluster');
-    if (urlCluster === 'devnet' || urlCluster === 'mainnet-beta') {
-      setCluster(urlCluster);
-    }
-  }, [setCluster]);
 
   const value = useMemo(() => {
     const config = CLUSTER_CONFIGS[cluster];
