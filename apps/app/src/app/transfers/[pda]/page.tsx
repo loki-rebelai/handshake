@@ -170,7 +170,7 @@ export default function TransferDetailPage() {
           Transactions
         </h2>
         <div className="space-y-3">
-          <TxLink label="Create TX" txid={transfer.createTxid} />
+          {transfer.createTxid && <TxLink label="Create TX" txid={transfer.createTxid} />}
           {transfer.claimTxid && <TxLink label="Claim TX" txid={transfer.claimTxid} />}
           {transfer.cancelTxid && <TxLink label="Cancel TX" txid={transfer.cancelTxid} />}
         </div>
@@ -291,6 +291,7 @@ function InstructionBanner({ isConnected, isSender, isRecipient, isActive }: {
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
+    PENDING: 'text-star-white/40 border-star-white/10',
     ACTIVE: 'text-solar-gold border-solar-gold/20',
     CLAIMED: 'text-nebula-purple border-nebula-purple/20',
     CANCELLED: 'text-star-white/40 border-star-white/10',
