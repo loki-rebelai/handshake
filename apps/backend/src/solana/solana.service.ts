@@ -108,12 +108,7 @@ export class SolanaService implements OnModuleInit {
     // Ensure Token record exists
     let token = await this.tokenRepo.findOne({ mint: usdcMintAddr });
     if (!token) {
-      token = this.tokenRepo.create({
-        mint: usdcMintAddr,
-        name: 'USD Coin',
-        symbol: 'USDC',
-        decimals: 6,
-      });
+      token = new Token(usdcMintAddr, 'USD Coin', 'USDC', 6);
       await this.em.persistAndFlush(token);
       this.logger.log(`Token synced to DB: USDC (${usdcMintAddr})`);
     } else {
@@ -139,14 +134,14 @@ export class SolanaService implements OnModuleInit {
         return;
       }
 
-      pool = this.poolRepo.create({
-        poolId: poolId.toBase58(),
-        poolPda: poolPdaStr,
-        operatorKey: onChain.operator.toBase58(),
+      pool = new Pool(
+        poolId.toBase58(),
+        poolPdaStr,
+        onChain.operator.toBase58(),
         token,
-        feeBps: onChain.transferFeeBps,
-        isPaused: onChain.isPaused,
-      });
+        onChain.transferFeeBps,
+        { isPaused: onChain.isPaused },
+      );
       await this.em.persistAndFlush(pool);
       this.logger.log(`Pool synced to DB: "${poolName}" (${poolPdaStr})`);
     } else {

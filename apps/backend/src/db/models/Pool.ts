@@ -22,6 +22,22 @@ export class Pool {
   @Property()
   feeBps!: number;
 
+  constructor(
+    poolId: string,
+    poolPda: string,
+    operatorKey: string,
+    token: Token,
+    feeBps: number,
+    opts?: { isPaused?: boolean },
+  ) {
+    this.poolId = poolId;
+    this.poolPda = poolPda;
+    this.operatorKey = operatorKey;
+    this.token = token;
+    this.feeBps = feeBps;
+    if (opts?.isPaused) this.isPaused = opts.isPaused;
+  }
+
   @Property({ type: 'text', default: '0' })
   totalTransfersCreated: string = '0';
 

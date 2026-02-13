@@ -91,6 +91,29 @@ export class TxService {
 
     const serialized = tx.serialize({ requireAllSignatures: false }).toString('base64');
 
+    // Persist transfer to DB as PENDING
+    let pool = await this.poolRepo.findOne({ poolPda: poolPda.toBase58() }, { populate: ['token'] });
+    if (!pool) {
+      pool = await this.ensurePool(poolPda.toBase58());
+    }
+
+    const transfer = new Transfer(
+      transferPda.toBase58(),
+      params.sender,
+      params.recipient,
+      params.amount.toString(),
+      amountRaw.toString(),
+      token,
+      pool,
+      {
+        status: TransferStatus.PENDING,
+        memo: params.memo,
+        claimableAfter: params.claimableAfter ? new Date(params.claimableAfter * 1000) : undefined,
+        claimableUntil: params.claimableUntil ? new Date(params.claimableUntil * 1000) : undefined,
+      },
+    );
+    await this.em.persistAndFlush(transfer);
+
     return {
       transaction: serialized,
       transferPda: transferPda.toBase58(),
@@ -243,6 +266,7 @@ export class TxService {
 
     if (existing) {
       existing.status = status;
+      if (!existing.createTxid) existing.createTxid = txid;
       if (status === TransferStatus.CLAIMED) existing.claimTxid = txid;
       if (status === TransferStatus.CANCELLED) existing.cancelTxid = txid;
       await this.em.flush();
@@ -258,20 +282,22 @@ export class TxService {
 
     const token = pool.token;
 
-    const transfer = this.transferRepo.create({
-      transferPda: pda,
-      sender: onChain.sender.toBase58(),
-      recipient: onChain.recipient.toBase58(),
-      amount: (onChain.amount as BN).toString(),
-      amountRaw: (onChain.amount as BN).toString(),
+    const transfer = new Transfer(
+      pda,
+      onChain.sender.toBase58(),
+      onChain.recipient.toBase58(),
+      (onChain.amount as BN).toString(),
+      (onChain.amount as BN).toString(),
       token,
       pool,
-      status,
-      memo: this.decodeMemo(onChain.memo),
-      createTxid: txid,
-      claimableAfter: this.bnToDate(onChain.claimableAfter),
-      claimableUntil: this.bnToDate(onChain.claimableUntil),
-    });
+      {
+        status,
+        memo: this.decodeMemo(onChain.memo),
+        createTxid: txid,
+        claimableAfter: this.bnToDate(onChain.claimableAfter),
+        claimableUntil: this.bnToDate(onChain.claimableUntil),
+      },
+    );
 
     await this.em.persistAndFlush(transfer);
     return transfer;
@@ -284,16 +310,14 @@ export class TxService {
 
     const token = await this.getOrCreateToken(onChain.mint.toBase58());
 
-    const pool = this.poolRepo.create({
-      poolId: onChain.poolId.toBase58(),
+    const pool = new Pool(
+      onChain.poolId.toBase58(),
       poolPda,
-      operatorKey: onChain.operator.toBase58(),
+      onChain.operator.toBase58(),
       token,
-      feeBps: onChain.transferFeeBps,
-      totalTransfersCreated: onChain.totalTransfersCreated.toString(),
-      totalTransfersResolved: onChain.totalTransfersResolved.toString(),
-      isPaused: onChain.isPaused,
-    });
+      onChain.transferFeeBps,
+      { isPaused: onChain.isPaused },
+    );
 
     await this.em.persistAndFlush(pool);
     return pool;
@@ -304,12 +328,7 @@ export class TxService {
     if (token) return token;
 
     // For now, create a placeholder. In the future, fetch metadata from chain.
-    token = this.tokenRepo.create({
-      mint,
-      name: 'Unknown',
-      symbol: 'UNK',
-      decimals: 6,
-    });
+    token = new Token(mint, 'Unknown', 'UNK', 6);
 
     await this.em.persistAndFlush(token);
     return token;

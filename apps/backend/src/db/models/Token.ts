@@ -18,6 +18,13 @@ export class Token {
   @Property()
   decimals!: number;
 
+  constructor(mint: string, name: string, symbol: string, decimals: number) {
+    this.mint = mint;
+    this.name = name;
+    this.symbol = symbol;
+    this.decimals = decimals;
+  }
+
   @Property()
   createdAt: Date = new Date();
 }

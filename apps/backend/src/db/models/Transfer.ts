@@ -4,6 +4,7 @@ import { Token } from './Token';
 import { Pool } from './Pool';
 
 export enum TransferStatus {
+  PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
   CLAIMED = 'CLAIMED',
   CANCELLED = 'CANCELLED',
@@ -41,11 +42,41 @@ export class Transfer {
   @Enum(() => TransferStatus)
   status: TransferStatus = TransferStatus.ACTIVE;
 
+  constructor(
+    transferPda: string,
+    sender: string,
+    recipient: string,
+    amount: string,
+    amountRaw: string,
+    token: Token,
+    pool: Pool,
+    opts?: {
+      status?: TransferStatus;
+      memo?: string;
+      createTxid?: string;
+      claimableAfter?: Date;
+      claimableUntil?: Date;
+    },
+  ) {
+    this.transferPda = transferPda;
+    this.sender = sender;
+    this.recipient = recipient;
+    this.amount = amount;
+    this.amountRaw = amountRaw;
+    this.token = token;
+    this.pool = pool;
+    if (opts?.status) this.status = opts.status;
+    if (opts?.memo) this.memo = opts.memo;
+    if (opts?.createTxid) this.createTxid = opts.createTxid;
+    if (opts?.claimableAfter) this.claimableAfter = opts.claimableAfter;
+    if (opts?.claimableUntil) this.claimableUntil = opts.claimableUntil;
+  }
+
   @Property({ nullable: true })
   memo?: string;
 
-  @Property()
-  createTxid!: string;
+  @Property({ nullable: true })
+  createTxid?: string;
 
   @Property({ nullable: true })
   claimTxid?: string;
