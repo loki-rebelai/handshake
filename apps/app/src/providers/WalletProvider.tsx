@@ -14,7 +14,7 @@ export function WalletContextProvider({ children }: { children: React.ReactNode 
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
 
   return (
-    <ConnectionProvider endpoint={rpcUrl} key={rpcUrl}>
+    <ConnectionProvider endpoint={rpcUrl}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
