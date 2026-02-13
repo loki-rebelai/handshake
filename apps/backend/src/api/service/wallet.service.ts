@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { PublicKey } from '@solana/web3.js';
@@ -8,6 +8,8 @@ import { Token } from '../../db/models/Token';
 
 @Injectable()
 export class WalletService {
+  private readonly logger = new Logger(WalletService.name);
+
   constructor(
     private readonly solanaService: SolanaService,
     @InjectRepository(Token)
@@ -15,6 +17,7 @@ export class WalletService {
   ) {}
 
   async getBalances(address: string) {
+    this.logger.log(`getBalances: ${address}`);
     const connection = this.solanaService.getConnection();
     const pubkey = new PublicKey(address);
 

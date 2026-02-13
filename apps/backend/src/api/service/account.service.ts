@@ -10,11 +10,13 @@ export class AccountService {
   constructor(private readonly solanaService: SolanaService) {}
 
   async getAccountsByOperator(operatorPubkey: string) {
+    this.logger.log(`getAccountsByOperator: ${operatorPubkey}`);
     const client = this.solanaService.getSilkysigClient();
     return client.findAccountsByOperator(new PublicKey(operatorPubkey));
   }
 
   async getAccount(pda: string) {
+    this.logger.log(`getAccount: ${pda}`);
     const client = this.solanaService.getSilkysigClient();
     const connection = this.solanaService.getConnection();
     const pdaKey = new PublicKey(pda);
@@ -48,6 +50,7 @@ export class AccountService {
     operator?: string;
     perTxLimit?: number;
   }) {
+    this.logger.log(`buildCreateAccountTx: owner=${params.owner}, operator=${params.operator || 'none'}, limit=${params.perTxLimit ?? 'none'}`);
     const client = this.solanaService.getSilkysigClient();
     const owner = new PublicKey(params.owner);
     const mint = new PublicKey(params.mint);
@@ -62,6 +65,7 @@ export class AccountService {
     accountPda: string;
     amount: number;
   }) {
+    this.logger.log(`buildDepositTx: depositor=${params.depositor}, account=${params.accountPda}, amount=${params.amount}`);
     const client = this.solanaService.getSilkysigClient();
     return client.buildDepositTx(
       new PublicKey(params.depositor),
@@ -76,6 +80,7 @@ export class AccountService {
     recipient: string;
     amount: number;
   }) {
+    this.logger.log(`buildTransferFromAccountTx: signer=${params.signer}, account=${params.accountPda}, recipient=${params.recipient}, amount=${params.amount}`);
     const client = this.solanaService.getSilkysigClient();
     return client.buildTransferFromAccountTx(
       new PublicKey(params.signer),

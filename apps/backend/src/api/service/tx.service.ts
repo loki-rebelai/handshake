@@ -46,6 +46,7 @@ export class TxService {
   ) {}
 
   async buildCreateTransfer(params: CreateTransferParams) {
+    this.logger.log(`buildCreateTransfer: ${params.sender} -> ${params.recipient}, amount=${params.amount} ${params.token || params.mint || 'default'}`);
     const client = this.solanaService.getHandshakeClient();
     const connection = this.solanaService.getConnection();
 
@@ -99,6 +100,7 @@ export class TxService {
   }
 
   async buildClaimTransfer(params: ClaimTransferParams) {
+    this.logger.log(`buildClaimTransfer: claimer=${params.claimer}, pda=${params.transferPda}`);
     const client = this.solanaService.getHandshakeClient();
     const connection = this.solanaService.getConnection();
 
@@ -130,6 +132,7 @@ export class TxService {
   }
 
   async buildCancelTransfer(params: CancelTransferParams) {
+    this.logger.log(`buildCancelTransfer: canceller=${params.canceller}, pda=${params.transferPda}`);
     const client = this.solanaService.getHandshakeClient();
     const connection = this.solanaService.getConnection();
 
@@ -161,6 +164,7 @@ export class TxService {
   }
 
   async submitSignedTx(signedTxBase64: string) {
+    this.logger.log(`submitSignedTx: ${signedTxBase64.length} bytes`);
     const connection = this.solanaService.getConnection();
     const client = this.solanaService.getHandshakeClient();
 
@@ -177,6 +181,7 @@ export class TxService {
     }
 
     await connection.confirmTransaction(txid, 'confirmed');
+    this.logger.log(`submitSignedTx confirmed: ${txid}`);
 
     // Index the transfer if this was a transfer-related tx
     await this.indexFromTx(txid);

@@ -77,6 +77,7 @@ export class ChatService implements OnModuleInit, OnModuleDestroy {
   }
 
   async sendMessage(sessionId: string, message: string): Promise<string> {
+    this.logger.log(`Chat message from session ${sessionId} (${message.length} chars)`);
     const session = this.sessions.get(sessionId) ?? { messages: [], lastAccess: Date.now() };
     session.lastAccess = Date.now();
     session.messages.push({ role: 'user', content: message });
