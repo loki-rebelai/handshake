@@ -116,7 +116,7 @@ export default function AccountDashboardPage() {
     if (isConnected) {
       loadAccount();
     }
-  }, [isConnected, loadAccount]);
+  }, [isConnected, loadAccount, cluster]);
 
   // ── Deposit handlers ──
 
