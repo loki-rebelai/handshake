@@ -4,6 +4,7 @@ import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { SolanaService } from '../../solana/solana.service';
+import { AccountService } from './account.service';
 import { Transfer, TransferStatus } from '../../db/models/Transfer';
 import { Pool } from '../../db/models/Pool';
 import { Token } from '../../db/models/Token';
@@ -36,6 +37,7 @@ export class TxService {
 
   constructor(
     private readonly solanaService: SolanaService,
+    private readonly accountService: AccountService,
     private readonly em: EntityManager,
     @InjectRepository(Transfer)
     private readonly transferRepo: EntityRepository<Transfer>,
@@ -261,6 +263,8 @@ export class TxService {
           // Not a transfer account, skip
         }
       }
+      // Index Silkysig account events
+      await this.accountService.indexSilkysigTx(txid, txInfo);
     } catch (e) {
       this.logger.warn(`Failed to index tx ${txid}: ${e.message}`);
     }

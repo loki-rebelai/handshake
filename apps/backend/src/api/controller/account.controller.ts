@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   HttpCode,
   BadRequestException,
   NotFoundException,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { PublicKey } from '@solana/web3.js';
 import { AccountService } from '../service/account.service';
+import { SilkAccountEventType } from '../../db/models/SilkAccountEvent';
 
 @Controller('api/account')
 export class AccountController {
@@ -55,6 +57,59 @@ export class AccountController {
     return { ok: true, data: { accounts } };
   }
 
+  @Get('list')
+  async listAccounts(@Query('owner') owner: string) {
+    this.validatePubkey(owner, 'owner');
+
+    const accounts = await this.accountService.findAccountsByOwner(owner);
+    return {
+      ok: true,
+      data: {
+        accounts: accounts.map((a) => ({
+          id: a.id,
+          pda: a.pda,
+          owner: a.owner,
+          mint: a.mint,
+          status: a.status,
+          operators: a.operators.getItems().map((op) => ({
+            operator: op.operator,
+            perTxLimit: op.perTxLimit,
+            createdAt: op.createdAt,
+          })),
+          createdAt: a.createdAt,
+          updatedAt: a.updatedAt,
+        })),
+      },
+    };
+  }
+
+  @Get(':pda/events')
+  async getEvents(
+    @Param('pda') pda: string,
+    @Query('eventType') eventType?: string,
+  ) {
+    this.validatePubkey(pda, 'pda');
+
+    const validType = eventType && Object.values(SilkAccountEventType).includes(eventType as SilkAccountEventType)
+      ? (eventType as SilkAccountEventType)
+      : undefined;
+
+    const events = await this.accountService.findEventsByAccount(pda, validType);
+    return {
+      ok: true,
+      data: {
+        events: events.map((e) => ({
+          id: e.id,
+          eventType: e.eventType,
+          txid: e.txid,
+          actor: e.actor,
+          data: e.data,
+          createdAt: e.createdAt,
+        })),
+      },
+    };
+  }
+
   @Get(':pda')
   async getAccount(@Param('pda') pda: string) {
     this.validatePubkey(pda, 'pda');
@@ -64,7 +119,7 @@ export class AccountController {
       throw new NotFoundException({ ok: false, error: 'ACCOUNT_NOT_FOUND', message: 'Account not found' });
     }
 
-    const operators = [];
+    const operators: Array<{ index: number; pubkey: string; perTxLimit: string }> = [];
     for (let i = 0; i < result.account.operatorCount; i++) {
       const slot = result.account.operators[i];
       operators.push({
