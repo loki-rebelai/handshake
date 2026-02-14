@@ -324,12 +324,15 @@ export class TxService {
 
     const token = pool.token;
 
+    const rawAmount = (onChain.amount as BN).toString();
+    const humanAmount = (Number(rawAmount) / 10 ** token.decimals).toString();
+
     const transfer = new Transfer(
       pda,
       onChain.sender.toBase58(),
       onChain.recipient.toBase58(),
-      (onChain.amount as BN).toString(),
-      (onChain.amount as BN).toString(),
+      humanAmount,
+      rawAmount,
       token,
       pool,
       {
