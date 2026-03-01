@@ -8,9 +8,11 @@ import {
 import { Request, Response } from 'express';
 import { readFile, stat } from 'fs/promises';
 import { join, resolve, normalize } from 'path';
+import { Public } from '../api/auth/public.decorator';
 
 const CONTENT_DIR = join(__dirname, '..', '..', 'content');
 
+@Public()
 @Controller()
 export class ContentController {
   @Get('/')

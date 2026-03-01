@@ -1,6 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Public } from '../auth/public.decorator';
 
+@Public()
 @Controller('.well-known')
 export class WellKnownController {
   private readonly network: string;
