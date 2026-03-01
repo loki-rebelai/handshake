@@ -31,10 +31,21 @@ export class AuthService {
     this.challenges.delete(pubkey);
 
     const messageBytes = Buffer.from(entry.nonce, 'utf-8');
-    const signatureBytes = Buffer.from(signature, 'base64');
-    const pubkeyBytes = new PublicKey(pubkey).toBytes();
 
-    const valid = nacl.sign.detached.verify(messageBytes, signatureBytes, pubkeyBytes);
+    let pubkeyBytes: Uint8Array;
+    try {
+      pubkeyBytes = new PublicKey(pubkey).toBytes();
+    } catch {
+      throw new Error('Invalid public key');
+    }
+
+    let valid: boolean;
+    try {
+      const signatureBytes = Buffer.from(signature, 'base64');
+      valid = nacl.sign.detached.verify(messageBytes, signatureBytes, pubkeyBytes);
+    } catch {
+      throw new Error('Signature verification failed');
+    }
     if (!valid) {
       throw new Error('Signature verification failed');
     }
@@ -45,7 +56,6 @@ export class AuthService {
     let record = await this.em.findOne(ApiKey, { pubkey });
     if (record) {
       record.keyHash = keyHash;
-      record.createdAt = new Date();
       record.revokedAt = undefined;
     } else {
       record = new ApiKey(pubkey, keyHash);
