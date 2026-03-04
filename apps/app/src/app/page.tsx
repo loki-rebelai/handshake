@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { useConnectedWallet } from '@/hooks/useConnectedWallet';
 import { useAccountActions } from '@/_jotai/account/account.actions';
 import { useCluster } from '@/contexts/ClusterContext';
-import { solscanUrl } from '@/lib/solscan';
+
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -49,8 +49,8 @@ export default function HomePage() {
   const clusterLabel = cluster === 'mainnet-beta' ? 'Solana Mainnet' : 'Solana Devnet';
 
   return (
-    <div className="relative min-h-[calc(100vh-3.5rem)]">
-      <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-center px-8" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+    <div>
+      <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-center px-8 py-24">
         <div className="animate-fade-up text-center">
           <h1 className="font-display text-4xl font-black uppercase tracking-wide bg-gradient-to-br from-[#fef3c7] via-solar-gold via-40% to-solar-orange bg-clip-text text-transparent">
             SilkyWay
@@ -87,17 +87,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        <footer className="absolute bottom-8 text-center">
-          <div className="text-[0.6rem] uppercase tracking-[0.2em] text-nebula-purple/40">Program</div>
-          <a
-            href={solscanUrl('HANDu9uNdnraNbcueGfXhd3UPu6BXfQroKAsSxFhPXEQ', 'account')}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[0.65rem] tracking-[0.03em] text-star-white/20 transition-colors hover:text-solar-gold/60"
-          >
-            HANDu9uNdnraNbcueGfXhd3UPu6BXfQroKAsSxFhPXEQ
-          </a>
-        </footer>
       </div>
     </div>
   );

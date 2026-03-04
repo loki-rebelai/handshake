@@ -6,6 +6,7 @@ import JotaiProvider from '@/providers/JotaiProvider';
 import { ClusterProvider } from '@/contexts/ClusterContext';
 import { WalletContextProvider } from '@/providers/WalletProvider';
 import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
   title: 'SilkyWay — Escrow Payments on Solana',
@@ -33,9 +34,10 @@ export default function RootLayout({
         <JotaiProvider>
           <ClusterProvider>
           <WalletContextProvider>
-            <div className="relative z-10">
+            <div className="relative z-10 flex min-h-screen flex-col">
               <Header />
-              <main>{children}</main>
+              <main className="flex-1">{children}</main>
+              <Footer />
             </div>
             <ToastContainer
               position="bottom-right"
