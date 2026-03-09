@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { parseChain, type ActionIntent, type IntentV2 as Intent } from '@silkysquad/silk';
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SolanaService } from '../../../solana/solana.service';
 import type { ChainBuilder, BuildOpts } from '../chain.interface';
@@ -8,6 +8,8 @@ import type { BuildResult } from '../../intent/types';
 import type { ProgramBuilder, SolanaBuildContext } from './program-builder.interface';
 import { NativeBuilder } from './programs/native.builder';
 import { HandshakeBuilder } from './programs/handshake.builder';
+import { JupiterBuilder } from './programs/jupiter.builder';
+import { SolanaTransactionAssembler } from './solana-tx-assembler';
 import { crossCheckProgram, resolveProgramAddress, resolveProgramName } from './program-registry';
 
 type ProgramRef = {
@@ -27,9 +29,12 @@ export class SolanaBuilder implements ChainBuilder {
     private readonly solanaService: SolanaService,
     private readonly nativeBuilder: NativeBuilder,
     private readonly handshakeBuilder: HandshakeBuilder,
+    private readonly jupiterBuilder: JupiterBuilder,
+    private readonly assembler: SolanaTransactionAssembler,
   ) {
     this.builders.set('native', nativeBuilder);
     this.builders.set('handshake', handshakeBuilder);
+    this.builders.set('jupiter', jupiterBuilder);
   }
 
   async build(intent: Intent, opts?: BuildOpts): Promise<BuildResult> {
@@ -44,9 +49,10 @@ export class SolanaBuilder implements ChainBuilder {
 
     const action = this.extractAction(intent);
     const feePayer = new PublicKey(opts?.feePayer || this.getFeePayer(action));
+    const signer = new PublicKey(this.getSigner(action, feePayer.toBase58()));
 
     const programRef = this.extractProgramRef(intent as IntentWithProgram);
-    const builderName = this.resolveBuilderName(programRef, chain, network);
+    const builderName = this.resolveBuilderName(programRef, chain, network, action.action);
     const builder = this.builders.get(builderName);
     if (!builder) {
       throw new Error(`No Solana builder registered for program '${builderName}'`);
@@ -55,42 +61,43 @@ export class SolanaBuilder implements ChainBuilder {
     const context: SolanaBuildContext = {
       connection: this.solanaService.getConnection(),
       feePayer,
+      signer,
       chain,
       network,
     };
 
-    const instructions = await builder.build(action, context);
-
-    const { blockhash } = await context.connection.getLatestBlockhash('confirmed');
-    const tx = new Transaction();
-    tx.recentBlockhash = blockhash;
-    tx.feePayer = feePayer;
-
-    for (const ix of instructions) {
-      tx.add(ix);
-    }
-
-    const serialized = tx.serialize({
-      requireAllSignatures: false,
-      verifySignatures: false,
-    }).toString('base64');
+    const result = await builder.build(action, context);
+    const assembleResult = await this.assembler.assemble({
+      instructions: result.instructions,
+      feePayer,
+      signer,
+      connection: context.connection,
+      addressLookupTableAddresses: result.addressLookupTableAddresses,
+    });
 
     const metadataProgram = this.resolveMetadataProgram(programRef, builderName, action, chain, network);
 
     return {
-      transaction: serialized,
+      transaction: assembleResult.transaction,
       intent,
       metadata: {
         chain,
         network,
         programName: programRef.programName || builderName,
         program: metadataProgram,
+        estimatedFee: `${assembleResult.priorityFee} microLamports`,
       },
     };
   }
 
   private extractAction(intent: Intent): ActionIntent {
-    const { chain: _chain, strict: _strict, program: _program, programName: _programName, ...action } = intent as IntentWithProgram;
+    const {
+      chain: _chain,
+      strict: _strict,
+      program: _program,
+      programName: _programName,
+      ...action
+    } = intent as IntentWithProgram;
     return action as ActionIntent;
   }
 
@@ -109,6 +116,21 @@ export class SolanaBuilder implements ChainBuilder {
     throw new Error('Unable to infer fee payer. Provide opts.feePayer.');
   }
 
+  private getSigner(action: ActionIntent, fallback: string): string {
+    const withAddresses = action as Record<string, unknown>;
+    const from = withAddresses['from'];
+    if (typeof from === 'string') {
+      return from;
+    }
+
+    const owner = withAddresses['owner'];
+    if (typeof owner === 'string') {
+      return owner;
+    }
+
+    return fallback;
+  }
+
   private extractProgramRef(intent: IntentWithProgram): ProgramRef {
     return {
       program: intent.program,
@@ -116,7 +138,12 @@ export class SolanaBuilder implements ChainBuilder {
     };
   }
 
-  private resolveBuilderName(programRef: ProgramRef, chain: string, network: string): string {
+  private resolveBuilderName(
+    programRef: ProgramRef,
+    chain: string,
+    network: string,
+    action?: string,
+  ): string {
     if (programRef.programName && programRef.program) {
       const matches = crossCheckProgram(chain, network, programRef.programName, programRef.program);
       if (!matches) {
@@ -145,6 +172,10 @@ export class SolanaBuilder implements ChainBuilder {
         );
       }
       return resolved.name;
+    }
+
+    if (action === 'swap') {
+      return 'jupiter';
     }
 
     return 'native';

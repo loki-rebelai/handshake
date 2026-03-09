@@ -4,9 +4,10 @@ import {
   createTokenRegistry,
   parseChain,
   verifyIntentV2,
-  type ActionIntent,
   type IntentV2 as Intent,
   type RiskFlag,
+  type SwapIntent,
+  type TokenRef,
   type TransactionAnalysis,
 } from '@silkysquad/silk';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
@@ -22,6 +23,7 @@ import type {
 import { deriveVerdict } from '../../intent/types';
 import { requireExactAmount, toBaseUnits } from './amount';
 import { crossCheckProgram, resolveProgramName } from './program-registry';
+import { JupiterClient } from './jupiter-client';
 
 type ProgramRef = {
   program?: string;
@@ -35,11 +37,19 @@ interface NativeTransferCheck {
   discrepancies: string[];
 }
 
+interface ResolvedTokenRef {
+  address: string;
+  decimals?: number;
+}
+
 @Injectable()
 export class SolanaAnalyzer implements ChainAnalyzer {
   readonly chain = 'solana';
 
-  constructor(private readonly solanaService: SolanaService) {}
+  constructor(
+    private readonly solanaService: SolanaService,
+    private readonly jupiterClient: JupiterClient,
+  ) {}
 
   async analyze(tx: string, intent: Intent, opts?: AnalyzeOpts): Promise<AnalyzeResult> {
     const { chain, network } = parseChain(intent.chain);
@@ -60,16 +70,27 @@ export class SolanaAnalyzer implements ChainAnalyzer {
       discrepancies.push(...nativeFallback.discrepancies);
     }
 
-    const matched = (verifyResult.matched || nativeFallback.matched) && discrepancies.length === 0;
+    const swapCheck = await this.checkSwapMatch(intent as IntentWithProgram, raw, chain, network);
+    if (swapCheck.discrepancies.length > 0) {
+      discrepancies.push(...swapCheck.discrepancies);
+    }
+
+    const hasMatchSignal = verifyResult.matched || nativeFallback.matched || swapCheck.matched;
+    const matched = hasMatchSignal && discrepancies.length === 0;
     const match: MatchDimension = {
-      level: matched ? 'full' : this.inferMatchLevel(intent as IntentWithProgram, raw, verifyResult.matched || nativeFallback.matched),
+      level: matched ? 'full' : this.inferMatchLevel(intent as IntentWithProgram, raw, hasMatchSignal),
       discrepancies,
     };
 
-    const risk = this.assessRisk(raw.flags);
+    const isSwap = 'action' in intent && intent.action === 'swap';
+    const risk = isSwap
+      ? await this.assessSwapRisk(intent as IntentWithProgram, chain, network, raw.flags)
+      : this.assessRisk(raw.flags);
     const viability = opts?.checkViability === false
       ? { level: 'viable' as const, issues: [] }
-      : await this.checkViability(intent as IntentWithProgram, chain, network);
+      : isSwap
+        ? await this.checkSwapViability(intent as IntentWithProgram, chain, network)
+        : await this.checkViability(intent as IntentWithProgram, chain, network);
 
     return {
       verdict: deriveVerdict(match, risk, viability),
@@ -155,7 +176,167 @@ export class SolanaAnalyzer implements ChainAnalyzer {
       return true;
     }
 
+    if (action === 'swap' && ixType === 'swap') {
+      return true;
+    }
+
     return false;
+  }
+
+  private async checkSwapMatch(
+    intent: IntentWithProgram,
+    raw: TransactionAnalysis,
+    chain: string,
+    network: string,
+  ): Promise<NativeTransferCheck> {
+    if (!('action' in intent) || intent.action !== 'swap') {
+      return { matched: false, discrepancies: [] };
+    }
+
+    const discrepancies: string[] = [];
+    const swap = intent as unknown as SwapIntent;
+    const expectedJupiter = resolveProgramName(chain, network, 'jupiter')?.address;
+
+    if (expectedJupiter) {
+      const hasJupiterIx = raw.instructions.some((ix) => ix.programId === expectedJupiter);
+      if (!hasJupiterIx) {
+        discrepancies.push('Transaction does not contain Jupiter program instructions');
+      }
+    }
+
+    const tokenIn = this.resolveSwapTokenRef(swap.tokenIn, chain, network);
+    const tokenOut = this.resolveSwapTokenRef(swap.tokenOut, chain, network);
+
+    if (tokenIn && !this.instructionMentionsAddress(raw, tokenIn.address)) {
+      discrepancies.push(`Input token ${tokenIn.address} not found in transaction`);
+    }
+    if (tokenOut && !this.instructionMentionsAddress(raw, tokenOut.address)) {
+      discrepancies.push(`Output token ${tokenOut.address} not found in transaction`);
+    }
+
+    return { matched: discrepancies.length === 0, discrepancies };
+  }
+
+  private async assessSwapRisk(
+    intent: IntentWithProgram,
+    chain: string,
+    network: string,
+    existingFlags: RiskFlag[],
+  ): Promise<RiskDimension> {
+    if (!('action' in intent) || intent.action !== 'swap') {
+      return this.assessRisk(existingFlags);
+    }
+
+    const flags: RiskFlag[] = [...existingFlags];
+    const swap = intent as unknown as SwapIntent;
+    const tokenIn = this.resolveSwapTokenRef(swap.tokenIn, chain, network);
+    const tokenOut = this.resolveSwapTokenRef(swap.tokenOut, chain, network);
+    const amountIn = swap.amountIn ? this.tryRequireExactAmount(swap.amountIn) : null;
+
+    if (!tokenIn || !tokenOut || !amountIn) {
+      return this.assessRisk(flags);
+    }
+
+    try {
+      const amountBaseUnits = await this.resolveSwapAmountBaseUnits(
+        amountIn,
+        tokenIn,
+        this.solanaService.getConnection(),
+      );
+      const quote = await this.jupiterClient.getQuote({
+        inputMint: tokenIn.address,
+        outputMint: tokenOut.address,
+        amount: amountBaseUnits,
+        slippageBps: this.toSlippageBps(swap.slippage),
+      });
+      const priceImpact = Number.parseFloat(quote.priceImpactPct);
+      if (Number.isFinite(priceImpact)) {
+        if (priceImpact > 5) {
+          flags.push({
+            code: 'HIGH_PRICE_IMPACT',
+            severity: 'error',
+            message: `Price impact ${priceImpact}% exceeds 5% threshold`,
+          });
+        } else if (priceImpact > 1) {
+          flags.push({
+            code: 'MODERATE_PRICE_IMPACT',
+            severity: 'warning',
+            message: `Price impact ${priceImpact}% exceeds 1% threshold`,
+          });
+        }
+      }
+    } catch {
+      // Ignore quote errors in risk scoring and keep base risk only.
+    }
+
+    return this.assessRisk(flags);
+  }
+
+  private async checkSwapViability(
+    intent: IntentWithProgram,
+    chain: string,
+    network: string,
+  ): Promise<ViabilityDimension> {
+    if (!('action' in intent) || intent.action !== 'swap') {
+      return { level: 'viable', issues: [] };
+    }
+
+    const issues: string[] = [];
+    const connection = this.solanaService.getConnection();
+    const swap = intent as unknown as SwapIntent;
+
+    let fromKey: PublicKey;
+    try {
+      fromKey = new PublicKey(swap.from);
+    } catch {
+      return { level: 'unviable', issues: [`Invalid sender public key '${swap.from}'`] };
+    }
+
+    const amountIn = swap.amountIn ? this.tryRequireExactAmount(swap.amountIn) : null;
+    if (!amountIn) {
+      return { level: 'uncertain', issues: ['Swap viability check requires exact amountIn'] };
+    }
+
+    try {
+      const balance = await connection.getBalance(fromKey, 'confirmed');
+      if (balance < 10_000) {
+        issues.push(`Insufficient SOL for transaction fees: have ${(balance / 1e9).toFixed(9)} SOL`);
+      }
+    } catch {
+      issues.push('Could not verify SOL balance via RPC');
+    }
+
+    const tokenIn = this.resolveSwapTokenRef(swap.tokenIn, chain, network);
+    if (!tokenIn) {
+      issues.push('Could not resolve swap input token');
+      return this.viabilityFromIssues(issues);
+    }
+
+    try {
+      const requiredRaw = BigInt(await this.resolveSwapAmountBaseUnits(amountIn, tokenIn, connection));
+      if (tokenIn.address === 'So11111111111111111111111111111111111111112') {
+        const solBalance = await connection.getBalance(fromKey, 'confirmed');
+        if (BigInt(solBalance) < requiredRaw + 10_000n) {
+          issues.push(
+            `Insufficient SOL balance: need ${(Number(requiredRaw + 10_000n) / 1e9).toFixed(9)} SOL (including fee buffer), have ${(solBalance / 1e9).toFixed(9)} SOL`,
+          );
+        }
+      } else {
+        const mintKey = new PublicKey(tokenIn.address);
+        const sourceAta = getAssociatedTokenAddressSync(mintKey, fromKey, true);
+        const tokenBalance = await connection.getTokenAccountBalance(sourceAta, 'confirmed');
+        const availableRaw = BigInt(tokenBalance.value.amount);
+        if (availableRaw < requiredRaw) {
+          issues.push(
+            `Insufficient input token balance: need ${requiredRaw.toString()} raw units, have ${availableRaw.toString()} raw units`,
+          );
+        }
+      }
+    } catch {
+      issues.push('Could not verify input token balance');
+    }
+
+    return this.viabilityFromIssues(issues);
   }
 
   private assessRisk(flags: RiskFlag[]): RiskDimension {
@@ -177,10 +358,19 @@ export class SolanaAnalyzer implements ChainAnalyzer {
       return { level: 'viable', issues: [] };
     }
 
+    const transfer = intent as IntentWithProgram & {
+      from?: unknown;
+      amount?: unknown;
+      token?: unknown;
+      tokenSymbol?: unknown;
+    };
     const issues: string[] = [];
     const connection = this.solanaService.getConnection();
 
-    const from = intent.from;
+    if (typeof transfer.from !== 'string') {
+      return { level: 'unviable', issues: ['Transfer intent is missing a valid from address'] };
+    }
+    const from = transfer.from;
     try {
       new PublicKey(from);
     } catch {
@@ -190,14 +380,17 @@ export class SolanaAnalyzer implements ChainAnalyzer {
     const fromKey = new PublicKey(from);
     const exactAmount = (() => {
       try {
-        return requireExactAmount(intent.amount);
+        return requireExactAmount(transfer.amount as any);
       } catch (err) {
         issues.push((err as Error).message);
         return null;
       }
     })();
 
-    if (!intent.token && (!intent.tokenSymbol || intent.tokenSymbol.toUpperCase() === 'SOL')) {
+    const token = typeof transfer.token === 'string' ? transfer.token : undefined;
+    const tokenSymbol = typeof transfer.tokenSymbol === 'string' ? transfer.tokenSymbol : undefined;
+
+    if (!token && (!tokenSymbol || tokenSymbol.toUpperCase() === 'SOL')) {
       try {
         const balance = await connection.getBalance(fromKey, 'confirmed');
         if (exactAmount) {
@@ -215,7 +408,7 @@ export class SolanaAnalyzer implements ChainAnalyzer {
       return this.viabilityFromIssues(issues);
     }
 
-    const mint = this.resolveMintAddress(intent, chain, network, issues);
+    const mint = this.resolveMintAddress({ token, tokenSymbol }, chain, network, issues);
     if (!mint || !exactAmount) {
       return this.viabilityFromIssues(issues);
     }
@@ -241,7 +434,7 @@ export class SolanaAnalyzer implements ChainAnalyzer {
   }
 
   private resolveMintAddress(
-    intent: IntentWithProgram & ActionIntent,
+    intent: { token?: string; tokenSymbol?: string },
     chain: string,
     network: string,
     issues: string[],
@@ -287,6 +480,17 @@ export class SolanaAnalyzer implements ChainAnalyzer {
       return { matched: false, discrepancies: [] };
     }
 
+    const transfer = intent as IntentWithProgram & {
+      from?: unknown;
+      to?: unknown;
+      amount?: unknown;
+      token?: unknown;
+      tokenSymbol?: unknown;
+    };
+    if (typeof transfer.from !== 'string' || typeof transfer.to !== 'string') {
+      return { matched: false, discrepancies: ['Transfer intent is missing from/to addresses'] };
+    }
+
     const ref = this.extractProgramRef(intent);
     if (ref.programName && ref.programName !== 'native') {
       return { matched: false, discrepancies: [] };
@@ -294,7 +498,7 @@ export class SolanaAnalyzer implements ChainAnalyzer {
 
     const exactAmount = (() => {
       try {
-        return requireExactAmount(intent.amount);
+        return requireExactAmount(transfer.amount as any);
       } catch (err) {
         return { error: (err as Error).message };
       }
@@ -314,7 +518,7 @@ export class SolanaAnalyzer implements ChainAnalyzer {
         const from = ix.params['from'];
         const to = ix.params['to'];
         const lamports = ix.params['lamports'];
-        if (from === intent.from && to === intent.to && lamports === toBaseUnits(exactAmount, 9).toString()) {
+        if (from === transfer.from && to === transfer.to && lamports === toBaseUnits(exactAmount, 9).toString()) {
           return { matched: true, discrepancies: [] };
         }
         continue;
@@ -322,11 +526,19 @@ export class SolanaAnalyzer implements ChainAnalyzer {
 
       if (ix.programId === TOKEN_PROGRAM_ID.toBase58()) {
         const authority = ix.params['authority'];
-        if (authority !== intent.from) {
+        if (authority !== transfer.from) {
           continue;
         }
 
-        const mintAddress = this.resolveMintAddress(intent as IntentWithProgram & ActionIntent, chain, network, []);
+        const mintAddress = this.resolveMintAddress(
+          {
+            token: typeof transfer.token === 'string' ? transfer.token : undefined,
+            tokenSymbol: typeof transfer.tokenSymbol === 'string' ? transfer.tokenSymbol : undefined,
+          },
+          chain,
+          network,
+          [],
+        );
         if (!mintAddress) {
           return { matched: false, discrepancies: ['Unable to verify SPL transfer target token mint'] };
         }
@@ -336,7 +548,7 @@ export class SolanaAnalyzer implements ChainAnalyzer {
         const requiredRaw = toBaseUnits(exactAmount, mintInfo.decimals).toString();
 
         const destination = ix.params['destination'];
-        const expectedDestination = getAssociatedTokenAddressSync(mint, new PublicKey(intent.to), true).toBase58();
+        const expectedDestination = getAssociatedTokenAddressSync(mint, new PublicKey(transfer.to), true).toBase58();
         const amount = ix.params['amount'];
 
         if (destination === expectedDestination && amount === requiredRaw) {
@@ -349,6 +561,88 @@ export class SolanaAnalyzer implements ChainAnalyzer {
       matched: false,
       discrepancies: ['Transaction transfer instruction did not match expected sender/recipient/amount for native transfer'],
     };
+  }
+
+  private instructionMentionsAddress(raw: TransactionAnalysis, address: string): boolean {
+    return raw.instructions.some((ix) => {
+      const params = ix.params ?? {};
+      return Object.values(params).some((value) => value === address);
+    });
+  }
+
+  private resolveSwapTokenRef(ref: TokenRef, chain: string, network: string): ResolvedTokenRef | null {
+    const registry = createTokenRegistry();
+    const symbol = ref.tokenSymbol?.toUpperCase();
+
+    const fromSymbol = (() => {
+      if (!symbol) {
+        return null;
+      }
+      if (symbol === 'SOL') {
+        return { address: 'So11111111111111111111111111111111111111112', decimals: 9 };
+      }
+      return registry.resolveSymbol(chain, network, symbol);
+    })();
+
+    if (symbol && !fromSymbol) {
+      return null;
+    }
+
+    if (ref.token && fromSymbol && fromSymbol.address !== ref.token) {
+      return null;
+    }
+
+    if (ref.token) {
+      const fromAddress = registry.resolveAddress(chain, network, ref.token);
+      return {
+        address: ref.token,
+        decimals: fromAddress?.decimals ?? fromSymbol?.decimals,
+      };
+    }
+
+    if (fromSymbol) {
+      return { address: fromSymbol.address, decimals: fromSymbol.decimals };
+    }
+
+    return null;
+  }
+
+  private async resolveSwapAmountBaseUnits(
+    amount: string,
+    token: ResolvedTokenRef,
+    connection: ReturnType<SolanaService['getConnection']>,
+  ): Promise<string> {
+    const decimals = token.decimals ?? await this.resolveSwapTokenDecimals(token.address, connection);
+    return toBaseUnits(amount, decimals).toString();
+  }
+
+  private async resolveSwapTokenDecimals(
+    mint: string,
+    connection: ReturnType<SolanaService['getConnection']>,
+  ): Promise<number> {
+    if (mint === 'So11111111111111111111111111111111111111112') {
+      return 9;
+    }
+    const mintInfo = await getMint(connection, new PublicKey(mint));
+    return mintInfo.decimals;
+  }
+
+  private tryRequireExactAmount(amount: unknown): string | null {
+    try {
+      return requireExactAmount(amount as string);
+    } catch {
+      return null;
+    }
+  }
+
+  private toSlippageBps(slippage?: number): number {
+    if (slippage === undefined) {
+      return 10;
+    }
+    if (!Number.isFinite(slippage) || slippage < 0 || slippage > 1) {
+      return 10;
+    }
+    return Math.round(slippage * 10_000);
   }
 
   private extractProgramRef(intent: IntentWithProgram): ProgramRef {

@@ -130,6 +130,63 @@ interface BuildMetadata {
 
 ---
 
+## Intent Type — Signer and Fee Payer
+
+Every intent requires a `signer` — the wallet that will sign the transaction. An optional `feePayer` specifies who pays transaction fees (defaults to `signer` if not provided).
+
+This distinction matters because:
+- On Solana, the fee payer is a separate concept that must also sign, but may differ from the action's initiator (e.g., a relayer paying fees).
+- An operator signing a Silkysig `transfer_from_account` is not the account owner.
+- On EVM, a smart contract wallet's owner and signer can differ.
+
+```typescript
+type SingleIntent = {
+  chain: string;
+  signer: string;          // wallet that signs the transaction
+  feePayer?: string;        // who pays fees (defaults to signer)
+  strict?: boolean;
+} & ActionIntent & ProgramRef;
+
+type CompoundIntent = {
+  chain: string;
+  signer: string;
+  feePayer?: string;
+  strict?: boolean;
+  actions: ActionIntent[];
+} & ProgramRef;
+```
+
+---
+
+## Swap Action
+
+Swap is a new action type alongside transfer. The SDK already defines `SwapIntent` with `TokenRef` objects for input and output sides:
+
+```typescript
+// Already exists in @silkysquad/silk src/intent/types.ts
+type SwapIntent = {
+  action: 'swap';
+  from: string;                          // swapper address
+  tokenIn: TokenRef;                     // { token?: string, tokenSymbol?: string }
+  tokenOut: TokenRef;                    // { token?: string, tokenSymbol?: string }
+  amountIn?: Constraint<string>;         // input amount (human-readable)
+  amountOut?: Constraint<string>;        // expected output amount
+  slippage?: number;                     // slippage tolerance as decimal (default: 0.001 = 10 bps)
+};
+```
+
+Each `TokenRef` supports `token` (mint address), `tokenSymbol`, or both with cross-check. `slippage` defaults to 0.001 (10 bps). For build, `amountIn` must be an exact value (not a constraint range).
+
+### Action semantics with programs
+
+- `action: 'swap'` with `programName: 'jupiter'` — Jupiter swap (default for swaps on Solana)
+- `action: 'transfer'` with no program — chain-native SPL/SOL transfer
+- `action: 'transfer'` with `programName: 'handshake'` — Handshake `create_transfer`
+
+The `action` describes what, the `program` describes which protocol.
+
+---
+
 ## Program Identification
 
 Mirrors the `token`/`tokenSymbol` convention:
@@ -155,14 +212,6 @@ Either, both, or neither can be provided:
 
 The registry is chain-and-network-scoped and bidirectional: resolve name to address for building, resolve address to name for analysis. Cross-checking works the same way as tokens — if both are provided and don't match, it's an error.
 
-### Action semantics
-
-- `action: 'transfer'` with no program — chain-native SPL/SOL transfer
-- `action: 'transfer'` with `programName: 'handshake'` — Handshake `create_transfer`
-- `action: 'swap'` with `programName: 'jupiter'` — Jupiter swap
-
-The `action` describes what, the `program` describes which protocol.
-
 ---
 
 ## Backend Module Structure
@@ -181,12 +230,16 @@ src/services/
     ├── chain.interface.ts           — ChainBuilder + ChainAnalyzer interfaces
     └── solana/
         ├── solana.module.ts
-        ├── solana.builder.ts        — dispatches to program builders
+        ├── solana.builder.ts        — dispatches to program builders, uses assembler
         ├── solana.analyzer.ts       — wraps SDK analyzeTransaction + risk/viability
+        ├── solana-tx-assembler.ts   — versioned tx assembly, simulation, CU, priority fees
+        ├── jupiter-client.ts        — Jupiter API wrapper (quote, swap-instructions)
+        ├── program-builder.interface.ts
+        ├── program-registry.ts
         └── programs/
             ├── native.builder.ts    — SPL transfers, system program
             ├── handshake.builder.ts — Handshake create_transfer, claim, cancel
-            └── silkysig.builder.ts  — Silkysig transfer_from_account, deposit
+            └── jupiter.builder.ts   — Jupiter swap via JupiterClient
 ```
 
 ### Chain interfaces
@@ -208,22 +261,76 @@ The orchestrator services hold a `Map<string, ChainBuilder>` and `Map<string, Ch
 ### Program builder interface
 
 ```typescript
+interface ProgramBuildResult {
+  instructions: TransactionInstruction[];
+  addressLookupTableAddresses?: string[];
+  metadata?: Record<string, unknown>;  // builder-specific (quote data, price impact, etc.)
+}
+
 interface ProgramBuilder {
   programName: string;
   supportedActions: string[];
-  build(intent: ActionIntent, context: SolanaBuildContext): Promise<TransactionInstruction[]>;
+  build(intent: ActionIntent, context: SolanaBuildContext): Promise<ProgramBuildResult>;
 }
 ```
 
-Each program builder returns raw instructions. The chain-level `solana.builder.ts` handles common boilerplate: blockhash, fee payer, compute budget, serialization.
+Each program builder returns instructions and optional address lookup table addresses. The chain-level `solana.builder.ts` hands the result to `SolanaTransactionAssembler` for versioned tx creation, simulation, and CU injection.
+
+### Solana Transaction Assembler
+
+`SolanaTransactionAssembler` is a dedicated service that converts raw instructions into a ready-to-sign versioned transaction:
+
+1. Resolves address lookup table accounts from RPC (if provided)
+2. Builds a V0 `VersionedTransaction` with the fee payer and latest blockhash
+3. Simulates the transaction using the signer to determine actual compute units consumed
+4. Rebuilds the transaction with:
+   - `SetComputeUnitLimit` = simulated CU + buffer
+   - `SetComputeUnitPrice` = priority fee (from network recent fees or config)
+5. Deduplicates any existing compute budget instructions (prevents double-setting)
+6. Returns serialized base64 transaction + metadata (estimated fee, CU used)
+
+This is the single place that handles versioned tx creation, ensuring consistent behavior across all program builders.
 
 ### Solana build flow
 
 1. `intent-build.service.ts` receives intent, parses chain, dispatches to `solana.builder.ts`
 2. `solana.builder.ts` checks for `program`/`programName` — if present, resolves via registry and dispatches to matching program builder. If absent, dispatches to `native.builder.ts`
-3. Program builder (e.g., `native.builder.ts`) resolves token via registry, creates ATA instruction if needed, builds transfer instruction, returns instructions
-4. `solana.builder.ts` assembles transaction with blockhash and fee payer, serializes
+3. Program builder (e.g., `jupiter.builder.ts`) builds instructions, returns `ProgramBuildResult` with instructions + lookup table addresses
+4. `solana.builder.ts` passes the result to `SolanaTransactionAssembler` which handles versioned tx creation, simulation, CU injection, and serialization
 5. If `analyze: true`, runs the analyze pipeline on the built transaction before returning
+
+### Jupiter build flow (within jupiter.builder.ts)
+
+1. Resolves input/output tokens via registry
+2. Calls `JupiterClient.getQuote()` with input mint, output mint, amount, slippageBps (default 10)
+3. Calls `JupiterClient.getSwapInstructions()` with quote and signer
+4. Returns `ProgramBuildResult` with setup + swap + cleanup instructions, address lookup table addresses, and quote metadata (price impact, output amount, route info)
+
+### Jupiter Client
+
+Thin wrapper over Jupiter's public API:
+
+```typescript
+class JupiterClient {
+  // GET /swap/v1/quote
+  getQuote(params: {
+    inputMint: string;
+    outputMint: string;
+    amount: string;
+    slippageBps: number;
+  }): Promise<JupiterQuoteResponse>;
+
+  // POST /swap/v1/swap-instructions
+  getSwapInstructions(params: {
+    quote: JupiterQuoteResponse;
+    signer: string;
+  }): Promise<JupiterSwapInstructionsResult>;
+}
+```
+
+The client strips Jupiter's compute budget instructions from the response — the `SolanaTransactionAssembler` handles CU independently via simulation.
+
+Shared between the builder (for creating swaps) and the analyzer (for fetching reference quotes to compare against).
 
 ### Solana analyze flow
 
@@ -234,44 +341,26 @@ Each program builder returns raw instructions. The chain-level `solana.builder.t
 5. Runs viability checks: RPC-based balance checks, token account existence, blockhash freshness
 6. Derives verdict from dimensions, returns `AnalyzeResult`
 
----
+### Swap-specific analysis
 
-## SDK Changes (`@silkysquad/silk`)
+**Match dimension for swaps:**
+- Transaction interacts with Jupiter program ID
+- Input token and amount match the intent
+- Output token matches the intent
+- Minimum output amount respects slippage tolerance
 
-### Intent type additions
+If all match → `full`. If Jupiter program matches but token/amount has discrepancies → `partial`. If not a Jupiter swap at all → `none`.
 
-```typescript
-type ProgramRef = {
-  programName?: string;
-  program?: string;
-};
+**Risk dimension for swaps:**
+- Fetches a fresh Jupiter quote for the same swap parameters
+- Price impact from quote: above 1% → `medium`, above 5% → `high`
+- Compares transaction amounts against current market quote to catch stale transactions
+- Existing SDK flags still apply (unknown program, unexpected SOL drain, etc.)
 
-// Updated
-type SingleIntent = { chain: string; strict?: boolean } & ActionIntent & ProgramRef;
-type CompoundIntent = { chain: string; strict?: boolean; actions: ActionIntent[] } & ProgramRef;
-```
-
-`ProgramRef` is optional on both forms. Compound intents apply the top-level `ProgramRef` as a default; individual actions could override it in the future.
-
-### Program registry (bidirectional)
-
-The token registry already supports `resolveSymbol` and `resolveAddress`. The program registry gets the same treatment:
-
-```typescript
-// Added to token-registry.ts or new program-registry.ts
-resolveProgram('solana', 'mainnet', 'handshake')
-// → { address: 'HANDu9uN...', name: 'handshake' }
-
-resolveProgramAddress('solana', 'mainnet', 'HANDu9uN...')
-// → { address: 'HANDu9uN...', name: 'handshake' }
-
-crossCheckProgram('solana', 'mainnet', 'handshake', 'HANDu9uN...')
-// → true
-```
-
-### Matcher changes
-
-When `program` or `programName` is provided on the intent, the matcher verifies that the matched instruction's `programId` corresponds to the expected program. If the program doesn't match, a discrepancy is added. When neither is provided, behavior is unchanged.
+**Viability dimension for swaps:**
+- Sender has sufficient input token balance
+- Fee payer has enough SOL for transaction fees
+- Blockhash freshness check
 
 ---
 
@@ -299,6 +388,14 @@ Reuses the SDK's existing flag engine:
 | `UNEXPECTED_TOKEN_TRANSFER` | warning | medium |
 | `LARGE_COMPUTE_BUDGET` | info | low |
 
+Swap-specific additions:
+
+| Condition | Risk level |
+|---|---|
+| Price impact > 5% | high |
+| Price impact > 1% | medium |
+| Output amount significantly below current market quote | medium |
+
 The backend can add its own rules on top (e.g., protocol reputation, contract age, known exploit history) in future iterations.
 
 ---
@@ -307,18 +404,21 @@ The backend can add its own rules on top (e.g., protocol reputation, contract ag
 
 **In scope:**
 - Solana chain builder and analyzer
-- Transfer action only: `native.builder.ts` (SPL/SOL), `handshake.builder.ts` (create_transfer)
+- Transfer action: `native.builder.ts` (SPL/SOL), `handshake.builder.ts` (create_transfer)
+- Swap action: `jupiter.builder.ts` (Jupiter swaps) + swap-specific analysis
+- `SolanaTransactionAssembler`: versioned transactions, simulation-based CU, priority fees
+- `JupiterClient`: Jupiter API wrapper shared by builder and analyzer
 - Basic viability checks (balance, token account, blockhash)
-- Basic risk assessment (SDK flag engine)
-- SDK type changes: `ProgramRef` on Intent, bidirectional program registry, matcher program check
+- Basic risk assessment (SDK flag engine + swap price impact)
+- SDK type changes: `signer`/`feePayer` on Intent, `SwapAction` type, `ProgramRef`, bidirectional program registry, matcher program check
 - Two API endpoints: `POST /api/intent/build`, `POST /api/intent/analyze`
 
 **Out of scope (future iterations):**
 - EVM chain builders
-- Swap, stake, lend, borrow builders
-- Simulation-based viability
+- Stake, lend, borrow builders
+- Simulation-based viability (beyond CU estimation)
 - Protocol-level risk scoring
-- Silkysig builder (deferred to second iteration after transfer works end-to-end)
+- Silkysig builder (deferred to second iteration after transfer + swap work end-to-end)
 
 ---
 
@@ -327,7 +427,7 @@ The backend can add its own rules on top (e.g., protocol reputation, contract ag
 | Component | Relationship |
 |---|---|
 | `src/api/service/tx.service.ts` | Existing Handshake-specific builder. Stays as-is. `handshake.builder.ts` in the new engine will eventually subsume its logic. |
-| `@silkysquad/silk` `src/intent/` | Intent types and verification. Gets `ProgramRef` addition and matcher update. |
+| `@silkysquad/silk` `src/intent/` | Intent types and verification. Gets `signer`/`feePayer`, `SwapAction`, `ProgramRef` additions and matcher update. |
 | `@silkysquad/silk` `src/verify/` | Solana decoder pipeline. Used by `solana.analyzer.ts` via `analyzeTransaction`. |
-| Midas `src/services/blockchain/` | Pattern reference for chain adapter dispatch. Not a dependency. |
-| Midas `packages/common` SolanaClient | Pattern reference for instruction composition and TX building. Not a dependency. |
+| Midas `src/services/jupiter/` | Pattern reference for Jupiter API integration. Adapted into `jupiter-client.ts`. Not a dependency. |
+| Midas `packages/common` SolanaClient | Pattern reference for `prepareVersionedTx` — versioned tx assembly, CU simulation, priority fees. Adapted into `SolanaTransactionAssembler`. Not a dependency. |
