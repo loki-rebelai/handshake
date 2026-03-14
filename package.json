@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "setup-devnet": "ts-node scripts/setup-devnet.ts",
-    "create-pool": "ts-node scripts/create-pool.ts"
+    "create-pool": "ts-node scripts/create-pool.ts",
+    "build:sdk": "yarn workspace @silkysquad/silk build"
   },
   "devDependencies": {
     "@coral-xyz/anchor": "^0.32.1",
